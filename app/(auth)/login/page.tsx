@@ -34,19 +34,21 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-4">
+    <main className="flex min-h-[100svh] items-center justify-center bg-paper px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-lg font-extrabold tracking-tight text-white">
             N
           </div>
-          <h1 className="font-display text-3xl text-ink">Welcome to Npay</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            Welcome to Npay
+          </h1>
           <p className="mt-2 text-sm text-ink-3">
             Pay bills back home, from anywhere.
           </p>
         </div>
 
-        <Card>
+        <Card className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
               id="email"
