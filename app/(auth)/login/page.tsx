@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -97,10 +97,9 @@ function GoogleButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [scriptReady, setScriptReady] = useState(false);
+  const btnRef = useRef<HTMLDivElement>(null);
 
-  // In production, wire this up to Google Identity Services
-  // (https://accounts.google.com/gsi/client) to obtain a real id_token,
-  // then POST it here exactly the same way.
   async function handleGoogleCredential(idToken: string) {
     setLoading(true);
     setError("");
@@ -117,23 +116,59 @@ function GoogleButton() {
     }
   }
 
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError("Google sign-in is not configured.");
+      return;
+    }
+
+    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
+    const script = existing || document.createElement("script");
+    if (!existing) {
+      script.id = "gsi-client-script";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+    }
+
+    script.onload = () => {
+      const g = (window as any).google;
+      if (!g?.accounts?.id || !btnRef.current) return;
+      g.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: any) => {
+          if (response?.credential) handleGoogleCredential(response.credential);
+        },
+      });
+      g.accounts.id.renderButton(btnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: btnRef.current.clientWidth || 320,
+        type: "standard",
+        text: "continue_with",
+      });
+      setScriptReady(true);
+    };
+    script.onerror = () => setError("Failed to load Google sign-in.");
+    if (!existing) document.body.appendChild(script);
+  }, []);
+
   return (
     <div>
-      <Button
-        type="button"
-        variant="secondary"
-        loading={loading}
-        className="w-full"
-        onClick={() => {
-          // Placeholder: replace with the real Google Identity Services flow.
-          // window.google.accounts.id.prompt() -> callback receives credential.idToken
-          // -> handleGoogleCredential(credential.idToken)
-          alert("Wire this button to Google Identity Services to get a real id_token.");
-        }}
-      >
-        Continue with Google
-      </Button>
+      <div ref={btnRef} className="flex w-full justify-center" />
+      {!scriptReady && (
+        <Button
+          type="button"
+          variant="secondary"
+          loading={loading}
+          className="w-full"
+          disabled
+        >
+          Continue with Google
+        </Button>
+      )}
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
 }
+
