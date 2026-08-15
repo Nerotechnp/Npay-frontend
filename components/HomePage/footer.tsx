@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Instagram, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, Mail } from "lucide-react";
 
 export function Footer() {
   return (
@@ -25,7 +25,7 @@ export function Footer() {
               <a href="#" className="text-ink-3 transition-colors hover:text-moss" aria-label="Instagram">
                 <Instagram size={18} />
               </a>
-              <a href="mailto:support@npay.com" className="text-ink-3 transition-colors hover:text-moss" aria-label="Email">
+              <a href="mailto:info@nepalsewa.com" className="text-ink-3 transition-colors hover:text-moss" aria-label="Email">
                 <Mail size={18} />
               </a>
             </div>
@@ -61,10 +61,9 @@ export function Footer() {
             <ul className="space-y-2.5">
               {[
                 { label: "About Us", href: "#" },
-                { label: "Get Started", href: "/login" },
-                { label: "Log In", href: "/login" },
                 { label: "Privacy Policy", href: "#" },
                 { label: "Terms of Service", href: "#" },
+                { label: "info@nepalsewa.com", href: "mailto:info@nepalsewa.com" },
               ].map((link) => (
                 <li key={link.label}>
                   <Link
@@ -76,11 +75,6 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-
-            <div className="mt-6 flex items-center gap-2 text-sm text-ink-3">
-              <Phone size={14} />
-              <span>+977-01-XXXXXXX</span>
-            </div>
           </div>
         </div>
 
