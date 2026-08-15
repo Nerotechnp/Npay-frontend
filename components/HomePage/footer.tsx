@@ -1,0 +1,95 @@
+import Link from "next/link";
+import { Facebook, Instagram, Mail, Phone } from "lucide-react";
+
+export function Footer() {
+  return (
+    <footer className="border-t border-line bg-white">
+      <div className="mx-auto max-w-6xl px-5 py-12">
+        <div className="grid gap-10 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-moss text-sm font-bold text-white">
+                N
+              </div>
+              <span className="text-lg font-bold text-ink">Npay</span>
+            </div>
+            <p className="max-w-xs text-sm leading-relaxed text-ink-3">
+              Pay bills in Nepal from anywhere. Recharge phones, buy data packs,
+              and settle utility bills — in any currency, for the people back
+              home.
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <a href="#" className="text-ink-3 transition-colors hover:text-moss" aria-label="Facebook">
+                <Facebook size={18} />
+              </a>
+              <a href="#" className="text-ink-3 transition-colors hover:text-moss" aria-label="Instagram">
+                <Instagram size={18} />
+              </a>
+              <a href="mailto:support@npay.com" className="text-ink-3 transition-colors hover:text-moss" aria-label="Email">
+                <Mail size={18} />
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink">
+              Services
+            </h4>
+            <ul className="space-y-2.5">
+              {[
+                { label: "Mobile Top-up", href: "/login" },
+                { label: "Data Packs", href: "/login" },
+                { label: "NEA Bill Payment", href: "/login" },
+                { label: "Utility Bills", href: "/login" },
+              ].map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-ink-3 transition-colors hover:text-ink"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink">
+              Company
+            </h4>
+            <ul className="space-y-2.5">
+              {[
+                { label: "About Us", href: "#" },
+                { label: "Get Started", href: "/login" },
+                { label: "Log In", href: "/login" },
+                { label: "Privacy Policy", href: "#" },
+                { label: "Terms of Service", href: "#" },
+              ].map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-ink-3 transition-colors hover:text-ink"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 flex items-center gap-2 text-sm text-ink-3">
+              <Phone size={14} />
+              <span>+977-01-XXXXXXX</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 border-t border-line pt-6 text-center">
+          <p className="text-xs text-ink-3">
+            &copy; {new Date().getFullYear()} Npay. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
