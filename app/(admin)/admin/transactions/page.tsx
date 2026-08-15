@@ -13,6 +13,23 @@ import type { TransactionStatus } from "@/types";
 
 const STATUS_OPTIONS: TransactionStatus[] = ["pending", "processing", "success", "failed", "refunded"];
 
+// gatewayName derives a human-readable delivery gateway name from the
+// transaction's provider_reference (e.g. "khalti:242016" -> "Khalti").
+function gatewayName(providerRef: string): string {
+  if (!providerRef) return "—";
+  const code = providerRef.split(":")[0].toLowerCase();
+  switch (code) {
+    case "khalti":
+      return "Khalti";
+    case "esewa":
+      return "eSewa";
+    case "ime":
+      return "IME";
+    default:
+      return code || "—";
+  }
+}
+
 export default function AdminTransactionsPage() {
   const [status, setStatus] = useState<TransactionStatus | "">("");
   const [offset, setOffset] = useState(0);
@@ -43,12 +60,15 @@ export default function AdminTransactionsPage() {
         </Select>
       </div>
 
-      <Card className="mt-4 overflow-hidden p-0">
+      <Card className="mt-4 overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line text-xs text-ink-3">
             <tr>
               <th className="bg-paper px-5 py-3 font-medium">Recipient</th>
               <th className="bg-paper px-5 py-3 font-medium">Amount</th>
+              <th className="bg-paper px-5 py-3 font-medium">Gateway</th>
+              <th className="bg-paper px-5 py-3 font-medium">Gateway Ref</th>
+              <th className="bg-paper px-5 py-3 font-medium">Gateway Response</th>
               <th className="bg-paper px-5 py-3 font-medium">Date</th>
               <th className="bg-paper px-5 py-3 font-medium">Status</th>
               <th className="bg-paper px-5 py-3 font-medium text-right">Override</th>
@@ -57,14 +77,14 @@ export default function AdminTransactionsPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-ink-3">
+                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
                   Loading…
                 </td>
               </tr>
             )}
             {data?.transactions.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-ink-3">
+                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
                   No transactions match this filter.
                 </td>
               </tr>
@@ -73,6 +93,13 @@ export default function AdminTransactionsPage() {
               <tr key={tx.id} className="border-b border-line last:border-0">
                 <td className="px-5 py-3 font-medium text-ink">{tx.recipient_number}</td>
                 <td className="px-5 py-3 text-ink-2/70">{formatMoney(tx.amount_charged, tx.currency)}</td>
+                <td className="px-5 py-3 text-ink-3">{gatewayName(tx.provider_reference)}</td>
+                <td className="px-5 py-3 font-mono text-xs text-ink-3">
+                  {tx.provider_reference || tx.gateway_reference || "—"}
+                </td>
+                <td className="px-5 py-3 max-w-[16rem] text-xs text-ink-3">
+                  {tx.receipt_message || "—"}
+                </td>
                 <td className="px-5 py-3 text-ink-3">{formatDate(tx.created_at)}</td>
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}>
