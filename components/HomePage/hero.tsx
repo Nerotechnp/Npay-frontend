@@ -26,7 +26,7 @@ export function Hero() {
         className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-moss/[0.04] blur-[80px]"
       />
 
-      <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-20 sm:pb-20 sm:pt-28">
+      <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-14 sm:px-5 sm:pb-16 sm:pt-20 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-moss/20 bg-moss/[0.07] px-4 py-2">
             <Globe className="h-3.5 w-3.5 text-moss" />
@@ -35,7 +35,7 @@ export function Hero() {
             </span>
           </div>
 
-          <h1 className="mb-6 text-4xl font-extrabold leading-[1.15] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          <h1 className="mb-6 text-[2.25rem] font-extrabold leading-[1.12] tracking-tight text-ink sm:text-5xl lg:text-6xl">
             Pay bills in Nepal
             <br className="hidden sm:block" /> from <span className="text-moss">anywhere</span>
           </h1>
@@ -46,21 +46,21 @@ export function Hero() {
             built for the Nepali diaspora.
           </p>
 
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
-            <Link href="/login">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+            <Link href="/login" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="gap-2 rounded-full px-7 shadow-md shadow-moss/20 transition-shadow hover:shadow-lg hover:shadow-moss/25"
+                className="w-full gap-2 rounded-full px-7 shadow-md shadow-moss/20 transition-shadow hover:shadow-lg hover:shadow-moss/25 sm:w-auto"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="#services">
+            <Link href="#services" className="w-full sm:w-auto">
               <Button
                 variant="secondary"
                 size="lg"
-                className="rounded-full px-7"
+                className="w-full rounded-full px-7 sm:w-auto"
               >
                 Explore Services
               </Button>

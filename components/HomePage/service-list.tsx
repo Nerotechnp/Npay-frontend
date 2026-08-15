@@ -71,7 +71,7 @@ export function ServicesList() {
 
               <Link
                 href={service.href}
-                className="mt-5 flex items-center gap-1 text-sm font-medium text-moss opacity-0 transition-opacity group-hover:opacity-100"
+                className="mt-5 flex items-center gap-1 text-sm font-medium text-moss opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
               >
                 Learn more <ArrowRight className="h-3.5 w-3.5" />
               </Link>
