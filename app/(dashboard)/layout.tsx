@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutGrid, Receipt, User, LogOut, ShieldCheck } from "lucide-react";
@@ -24,8 +25,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/login");
+    }
+  }, [isLoading, user, router]);
+
   if (!user) {
-    router.replace("/login");
     return null;
   }
 
