@@ -39,12 +39,6 @@ export function HomeNavbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-ink-3 transition-colors hover:text-ink sm:block"
-          >
-            Log In
-          </Link>
           <Link href="/login">
             <Button size="sm" className="gap-1.5 rounded-full px-4">
               Get Started
