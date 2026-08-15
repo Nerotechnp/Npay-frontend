@@ -18,15 +18,15 @@ export function Footer() {
               and settle utility bills — in any currency, for the people back
               home.
             </p>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex items-center gap-5">
               <a href="#" className="text-ink-3 transition-colors hover:text-moss" aria-label="Facebook">
-                <Facebook size={18} />
+                <Facebook size={24} />
               </a>
               <a href="#" className="text-ink-3 transition-colors hover:text-moss" aria-label="Instagram">
-                <Instagram size={18} />
+                <Instagram size={24} />
               </a>
               <a href="mailto:info@nepalsewa.com" className="text-ink-3 transition-colors hover:text-moss" aria-label="Email">
-                <Mail size={18} />
+                <Mail size={24} />
               </a>
             </div>
           </div>

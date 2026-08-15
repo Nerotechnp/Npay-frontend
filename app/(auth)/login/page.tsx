@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -34,7 +36,15 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-[100svh] items-center justify-center bg-paper px-4 py-10">
+    <main className="relative flex min-h-[100svh] items-center justify-center bg-paper px-4 py-10">
+      <Link
+        href="/"
+        aria-label="Back to home"
+        className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Link>
+
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-lg font-extrabold tracking-tight text-white">
