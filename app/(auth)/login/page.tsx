@@ -106,8 +106,8 @@ function GoogleButton() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [gsiReady, setGsiReady] = useState(false);
   const btnRef = useRef<HTMLDivElement>(null);
+  const skeletonRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleCredential = useCallback(
@@ -190,7 +190,10 @@ function GoogleButton() {
         type: "standard",
         text: "continue_with",
       });
-      setGsiReady(true);
+      // Hide the skeleton via the ref (not React state) so we don't trigger a
+      // re-render that could disturb the GSI-injected iframe and make the
+      // button flicker/jump.
+      if (skeletonRef.current) skeletonRef.current.style.display = "none";
     };
 
     // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
@@ -287,11 +290,12 @@ function GoogleButton() {
             (no blank -> pop). It's a sibling (not inside btnRef) so React never
             fights GSI for that node's children. */}
         <div
+          ref={skeletonRef}
           aria-hidden
-          className={`pointer-events-none absolute inset-0 flex items-center justify-center gap-3 rounded-lg border border-line-2 bg-paper ${gsiReady ? "hidden" : ""}`}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center gap-3 rounded-lg border border-line-2 bg-paper"
         >
           <span className="h-4 w-4 rounded-full bg-line-2" />
-          <span className="h-3 w-28 max-w-[55%] rounded bg-line-2 animate-pulse" />
+          <span className="h-3 w-28 max-w-[55%] rounded bg-line-2" />
         </div>
         <div ref={btnRef} className="absolute inset-0 flex items-center justify-center" />
       </div>
