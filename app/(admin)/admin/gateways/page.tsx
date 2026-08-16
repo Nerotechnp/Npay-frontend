@@ -25,14 +25,14 @@ export default function AdminGatewaysPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-2xl text-ink">Gateways</h1>
           <p className="mt-1 text-sm text-ink-3">
             Payment processors and delivery providers — add, rotate keys, or disable, no deploy needed.
           </p>
         </div>
-        <Button onClick={() => setEditing(null)}>
+        <Button onClick={() => setEditing(null)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           New gateway
         </Button>
@@ -42,7 +42,7 @@ export default function AdminGatewaysPage() {
         <p className="mt-4 rounded-md bg-red-50 px-4 py-2 text-sm text-danger">{deleteError}</p>
       )}
 
-      <Card className="mt-6 overflow-hidden p-0">
+      <Card className="mt-6 overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line text-xs text-ink-3">
             <tr>

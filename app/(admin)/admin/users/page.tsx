@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      <Card className="mt-4 overflow-hidden p-0">
+      <Card className="mt-4 overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line text-xs text-ink-3">
             <tr>

@@ -36,16 +36,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="flex min-h-screen flex-col bg-paper">
       <header className="sticky top-0 z-20 border-b border-line-2/80 bg-white">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 md:px-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex shrink-0 items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-moss text-[13px] font-extrabold tracking-tight text-white">
               N
             </span>
             <span className="text-sm font-semibold text-ink">Npay</span>
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="hidden items-center gap-1 md:flex">
             {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (
@@ -83,7 +83,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8 text-sm text-ink md:px-6">{children}</main>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-8 text-sm text-ink md:px-6 md:pb-8">{children}</main>
+
+      {/* Mobile bottom navigation — unified across all dashboard pages */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-2 bg-white/95 backdrop-blur md:hidden">
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+                active ? "text-moss" : "text-ink-3"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          );
+        })}
+        {user.is_admin && (
+          <Link
+            href="/admin"
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+              pathname.startsWith("/admin") ? "text-moss" : "text-ink-3"
+            }`}
+          >
+            <ShieldCheck className="h-5 w-5" />
+            Admin
+          </Link>
+        )}
+        <button
+          onClick={() => {
+            logout();
+            router.push("/login");
+          }}
+          className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-ink-3"
+        >
+          <LogOut className="h-5 w-5" />
+          Log out
+        </button>
+      </nav>
     </div>
   );
 }
