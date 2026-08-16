@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
@@ -99,7 +99,6 @@ function GoogleButton() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const btnRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleCredential = useCallback(
@@ -125,50 +124,34 @@ function GoogleButton() {
     [router]
   );
 
-  // Re-initialize + re-render the Google button on every mount (cancel any stale
-  // GSI state first) so it keeps working after navigating back to the login page.
-  // On mobile, Google OAuth does a full-page redirect, and "back" restores the
-  // page from the browser bfcache WITHOUT re-running this effect — leaving the
-  // button dead. The `pageshow` listener re-renders it when restored from cache.
+  // Initialize the GSI client (One Tap) on mount and on bfcache restore. One Tap
+  // shows an in-app, dismissible bottom-sheet instead of a full-page redirect,
+  // so on mobile / an installed PWA there is always a way back (close ✕) and the
+  // app context is never lost.
+  const initGoogle = useCallback(() => {
+    const g = (window as any).google;
+    if (!g?.accounts?.id) return;
+    g.accounts.id.initialize({
+      client_id: clientId,
+      callback: (response: any) => {
+        if (response?.credential) handleGoogleCredential(response.credential);
+      },
+      auto_select: false,
+    });
+  }, [clientId, handleGoogleCredential]);
+
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
-
-    const render = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id || !btnRef.current) return;
-      try {
-        g.accounts.id.cancel();
-      } catch {
-        // no prompt open — ignore
-      }
-      g.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response: any) => {
-          if (response?.credential) handleGoogleCredential(response.credential);
-        },
-        auto_select: false,
-      });
-      g.accounts.id.renderButton(btnRef.current, {
-        theme: "outline",
-        size: "large",
-        width: btnRef.current.clientWidth || 320,
-        type: "standard",
-        text: "continue_with",
-      });
-    };
-
+    initGoogle();
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) render();
+      if (e.persisted) initGoogle();
     };
     window.addEventListener("pageshow", onPageShow);
-
     const g = (window as any).google;
-    if (g?.accounts?.id) {
-      render();
-    } else {
+    if (!g?.accounts?.id) {
       const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
       const script = existing || document.createElement("script");
       if (!existing) {
@@ -176,15 +159,12 @@ function GoogleButton() {
         script.src = "https://accounts.google.com/gsi/client";
         script.async = true;
       }
-      script.onload = render;
+      script.onload = initGoogle;
       script.onerror = () => setError("Failed to load Google sign-in.");
       if (!existing) document.body.appendChild(script);
     }
-
-    return () => {
-      window.removeEventListener("pageshow", onPageShow);
-    };
-  }, [clientId, handleGoogleCredential]);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [clientId, initGoogle]);
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
@@ -192,7 +172,15 @@ function GoogleButton() {
 
   return (
     <div>
-      <div ref={btnRef} className="flex w-full justify-center" />
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        loading={loading}
+        onClick={() => (window as any).google?.accounts?.id?.prompt()}
+      >
+        Continue with Google
+      </Button>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );

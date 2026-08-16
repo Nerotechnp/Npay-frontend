@@ -56,7 +56,7 @@ Made the app installable ("Add to Home Screen") on mobile.
 ## 8. Auth pages — Google button + OTP back arrow
 **Files:** `app/(auth)/login/page.tsx`, `app/(auth)/verify-otp/page.tsx`
 
-- **Google button stopped working after navigating back** (needed a refresh). Cause: GSI's `renderButton()` handlers go stale after the SPA remounts. `GoogleButton` now re-`initialize()`s and re-renders the branded Google button on **every mount**, calling `google.accounts.id.cancel()` first to clear any stale GSI state — so it works reliably every time you return to the login page. (An earlier attempt used `prompt()`, but that needs One-Tap config and didn't trigger the flow.)
+- **Google sign-in on mobile / installed PWA opened as a full-page redirect with no way back.** Cause: GSI `renderButton` does a top-level redirect to `accounts.google.com` on mobile (popups are blocked); in a standalone PWA there is no browser chrome, so the user gets stuck on the Google page with no back. `GoogleButton` now uses **Google One Tap** (`google.accounts.id.prompt()`), which shows an **in-app, dismissible bottom-sheet** (with a close ✕) instead of leaving the app — so there is always a way back and the app context is never lost. The GSI client is initialized on mount and on `pageshow` (bfcache restore). **Requirement:** the app's origin must be listed in the Google Cloud OAuth client's **Authorized JavaScript origins** (and redirect URIs), otherwise `prompt()` silently does nothing.
 - **Verify-OTP page** now has a back arrow (matching the login page style) at the top-left that returns to `/login`, for consistency and an easy way back.
 
 ## 9. Google login → bounce/reload loop after sign-in
