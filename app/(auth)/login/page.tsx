@@ -56,7 +56,7 @@ export default function LoginPage() {
       </Link>
 
       <div className="w-full max-w-sm">
-        <div className="mb-3 flex flex-col items-center text-center sm:mb-4">
+        <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-lg font-extrabold tracking-tight text-white">
             N
           </div>

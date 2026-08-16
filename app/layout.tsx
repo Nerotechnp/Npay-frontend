@@ -7,14 +7,12 @@ const display = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "600", "700"],
-  display: "optional",
 });
 
 const body = Inter({
   subsets: ["latin"],
   variable: "--font-body",
   weight: ["400", "500", "600"],
-  display: "optional",
 });
 
 export const metadata: Metadata = {
