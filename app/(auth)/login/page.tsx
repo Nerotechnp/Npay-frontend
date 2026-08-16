@@ -130,10 +130,11 @@ function GoogleButton() {
   // `focus`/`visibilitychange` (sheet/tab closed, main frame never went hidden)
   // and `popstate`/`pageshow` (Back/Forward, bfcache restore).
   //
-  // We only do the heavy reset after a flow actually started (tracked via `blur`,
-  // since the main window loses focus when the Google sheet opens). On a normal
-  // page load these events also fire, and a needless reset would wipe + re-render
-  // the button and make the page jump up/down.
+  // On a normal page load these recovery events also fire, so we (1) only fully
+  // reset GSI after a flow actually started (tracked via `blur`, since the main
+  // window loses focus when the Google sheet opens), and (2) render the button at
+  // most once per mount/reset. Without the once-guard a needless wipe + re-render
+  // makes the button blink and shifts the layout up/down.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -141,10 +142,13 @@ function GoogleButton() {
     }
 
     let flowStarted = false;
+    let rendered = false;
 
     const render = () => {
       const g = (window as any).google;
       if (!g?.accounts?.id || !btnRef.current) return;
+      if (rendered) return;
+      rendered = true;
       try {
         g.accounts.id.cancel();
       } catch {
@@ -174,6 +178,7 @@ function GoogleButton() {
     // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
     // button is guaranteed to be interactive again after a dismissed/abandoned flow.
     const resetGsi = () => {
+      rendered = false;
       try {
         (window as any).google = undefined;
       } catch {
@@ -192,7 +197,6 @@ function GoogleButton() {
 
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) resetGsi();
-      else render();
     };
     const onPageHide = () => {
       try {
@@ -245,7 +249,7 @@ function GoogleButton() {
 
   return (
     <div>
-      <div ref={btnRef} className="flex w-full justify-center" />
+      <div ref={btnRef} className="flex min-h-[44px] w-full justify-center" />
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
