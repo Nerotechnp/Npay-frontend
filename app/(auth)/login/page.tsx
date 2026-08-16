@@ -124,9 +124,14 @@ function GoogleButton() {
 
   // Render the branded GSI button. It opens the Google sign-in reliably (popup on
   // desktop, full-page on mobile) WITHOUT needing One-Tap to be enabled in Google
-  // Cloud. We re-init + re-render on mount and on bfcache restore (mobile "back"),
-  // and clear any stale GSI iframe first, so the button keeps working after
-  // navigating back.
+  // Cloud.
+  //
+  // Mobile fix: when the GSI button does a full-page redirect on mobile and the
+  // user presses the browser Back button, the login page is restored from bfcache.
+  // The previously-loaded GSI instance is frozen/stale, so re-initializing it alone
+  // is unreliable and the button stops responding to clicks. To recover reliably we
+  // drop the stale `window.google` reference and re-inject the GSI script on
+  // bfcache restore, giving the page a fresh library + a freshly rendered button.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -162,8 +167,28 @@ function GoogleButton() {
       });
     };
 
+    const loadScript = () => {
+      const existing = document.getElementById("gsi-client-script");
+      if (existing) existing.remove();
+      const script = document.createElement("script");
+      script.id = "gsi-client-script";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = render;
+      script.onerror = () => setError("Failed to load Google sign-in.");
+      document.body.appendChild(script);
+    };
+
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) render();
+      // bfcache restore (mobile "back"): force a clean GSI instance.
+      if (e.persisted) {
+        try {
+          (window as any).google = undefined;
+        } catch {
+          // ignore — script re-injection will redefine it anyway
+        }
+        loadScript();
+      }
     };
     const onPageHide = () => {
       try {
@@ -184,16 +209,7 @@ function GoogleButton() {
     if (g?.accounts?.id) {
       render();
     } else {
-      const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
-      const script = existing || document.createElement("script");
-      if (!existing) {
-        script.id = "gsi-client-script";
-        script.src = "https://accounts.google.com/gsi/client";
-        script.async = true;
-      }
-      script.onload = render;
-      script.onerror = () => setError("Failed to load Google sign-in.");
-      if (!existing) document.body.appendChild(script);
+      loadScript();
     }
 
     return () => {
