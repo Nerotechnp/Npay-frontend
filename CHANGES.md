@@ -48,8 +48,8 @@ Made the app installable ("Add to Home Screen") on mobile.
 ## 6. Mobile topup — early carrier detection
 **Files:** `app/(dashboard)/topup/page.tsx`, `Npay-backend/internal/handlers/config_handler.go`
 
-- Backend `POST /api/v1/products/detect` previously required **exactly 10 digits**; now accepts **≥3 digits** and uses the first 3 as the prefix, so the carrier is recognized as soon as the prefix is typed.
-- Frontend triggers detection at **3 digits** and only re-calls the backend when the 3-digit prefix actually changes (cached via a `lastPrefix` ref) — avoids request spam and feels instant ("too slow" fixed).
+- Backend `POST /api/v1/products/detect` now accepts **≥3 digits** (instead of exactly 10) and uses the first 3 as the prefix, so the carrier can be recognized from the prefix.
+- **Frontend carrier detection is now fully client-side and instant** — it matches the 3-digit prefix against the `phone_prefixes` of the already-loaded `products` (from `useServices()`), so there is **no network/API call at all**. This removed the mobile latency that made detection feel slow. The `useDetectProduct` backend hook is no longer used by the topup flow.
 - `Continue` now validates the number is **exactly 10 digits** ("Enter a valid 10-digit Nepal mobile number").
 - Phone input upgraded for mobile: `type="tel"`, `inputMode="numeric"`, `maxLength={10}`, and strips non-digits on change (numeric keypad, no stray characters).
 

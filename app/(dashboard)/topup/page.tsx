@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useServices, useDetectProduct } from "@/hooks/useServices";
+import { useServices } from "@/hooks/useServices";
 import { useConfig } from "@/hooks/useConfig";
 import { useCreateTransaction, useInitiatePayment } from "@/hooks/useTransactions";
 import type { Product } from "@/types";
@@ -14,7 +14,6 @@ import { Card } from "@/components/ui/Card";
 export default function TopupPage() {
   const { data: products } = useServices();
   const { data: config } = useConfig();
-  const detectProduct = useDetectProduct();
   const createTransaction = useCreateTransaction();
   const initiatePayment = useInitiatePayment();
 
@@ -24,36 +23,28 @@ export default function TopupPage() {
   const [amountNpr, setAmountNpr] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
-  const lastPrefix = useRef("");
 
-  // Auto-detect the carrier from the phone number via the backend, which uses
-  // each product's admin-managed phone_prefixes. No client-side hardcoding.
-  // Detect the carrier as soon as 3 digits are entered (the prefix is enough),
-  // and only hit the backend when the 3-digit prefix actually changes — so typing
-  // the rest of the number doesn't spam requests and the result feels instant.
+  // Instant, network-free carrier detection: the products (with their
+  // admin-managed phone_prefixes) are already loaded by useServices(), so we just
+  // match the 3-digit prefix client-side. No API round-trip, so it never feels slow.
   useEffect(() => {
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 3) {
       setProvider(null);
-      lastPrefix.current = "";
       return;
     }
     const prefix = digits.slice(0, 3);
-    if (prefix === lastPrefix.current) return;
-    lastPrefix.current = prefix;
-    let cancelled = false;
-    detectProduct.mutate(digits, {
-      onSuccess: (p) => {
-        if (!cancelled) setProvider(p);
-      },
-      onError: () => {
-        if (!cancelled) setProvider(null);
-      },
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [phone, detectProduct]);
+    const match = (products || []).find(
+      (p) =>
+        p.is_active &&
+        p.category === "mobile_topup" &&
+        p.phone_prefixes
+          .split(",")
+          .map((x) => x.trim())
+          .includes(prefix)
+    );
+    setProvider(match || null);
+  }, [phone, products]);
 
   const exchangeRate = config?.exchange_rate_usd_to_npr || 0;
   const currencies = config?.supported_currencies || ["USD"];
