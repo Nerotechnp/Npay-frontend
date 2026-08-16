@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
@@ -99,6 +99,7 @@ function GoogleButton() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const btnRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleCredential = useCallback(
@@ -110,9 +111,6 @@ function GoogleButton() {
         const { access_token, refresh_token, user } = res.data.data;
         const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
-        // Store the user immediately so the dashboard guard sees an authenticated
-        // user on arrival — otherwise it bounces back to /login (token present)
-        // and reloads 2-3 times before settling.
         useAuthStore.getState().setUser(user);
         router.push("/dashboard");
       } catch (err: any) {
@@ -124,34 +122,68 @@ function GoogleButton() {
     [router]
   );
 
-  // Initialize the GSI client (One Tap) on mount and on bfcache restore. One Tap
-  // shows an in-app, dismissible bottom-sheet instead of a full-page redirect,
-  // so on mobile / an installed PWA there is always a way back (close ✕) and the
-  // app context is never lost.
-  const initGoogle = useCallback(() => {
-    const g = (window as any).google;
-    if (!g?.accounts?.id) return;
-    g.accounts.id.initialize({
-      client_id: clientId,
-      callback: (response: any) => {
-        if (response?.credential) handleGoogleCredential(response.credential);
-      },
-      auto_select: false,
-    });
-  }, [clientId, handleGoogleCredential]);
-
+  // Render the branded GSI button. It opens the Google sign-in reliably (popup on
+  // desktop, full-page on mobile) WITHOUT needing One-Tap to be enabled in Google
+  // Cloud. We re-init + re-render on mount and on bfcache restore (mobile "back"),
+  // and clear any stale GSI iframe first, so the button keeps working after
+  // navigating back.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
-    initGoogle();
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) initGoogle();
+
+    const render = () => {
+      const g = (window as any).google;
+      if (!g?.accounts?.id || !btnRef.current) return;
+      try {
+        g.accounts.id.cancel();
+      } catch {
+        // no prompt open — ignore
+      }
+      try {
+        btnRef.current.innerHTML = "";
+      } catch {
+        // ignore
+      }
+      g.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: any) => {
+          if (response?.credential) handleGoogleCredential(response.credential);
+        },
+        auto_select: false,
+      });
+      g.accounts.id.renderButton(btnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: btnRef.current.clientWidth || 320,
+        type: "standard",
+        text: "continue_with",
+      });
     };
+
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) render();
+    };
+    const onPageHide = () => {
+      try {
+        (window as any).google?.accounts?.id?.cancel();
+      } catch {
+        // ignore
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") render();
+    };
+
     window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisible);
+
     const g = (window as any).google;
-    if (!g?.accounts?.id) {
+    if (g?.accounts?.id) {
+      render();
+    } else {
       const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
       const script = existing || document.createElement("script");
       if (!existing) {
@@ -159,12 +191,17 @@ function GoogleButton() {
         script.src = "https://accounts.google.com/gsi/client";
         script.async = true;
       }
-      script.onload = initGoogle;
+      script.onload = render;
       script.onerror = () => setError("Failed to load Google sign-in.");
       if (!existing) document.body.appendChild(script);
     }
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, [clientId, initGoogle]);
+
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [clientId, handleGoogleCredential]);
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
@@ -172,15 +209,7 @@ function GoogleButton() {
 
   return (
     <div>
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full"
-        loading={loading}
-        onClick={() => (window as any).google?.accounts?.id?.prompt()}
-      >
-        Continue with Google
-      </Button>
+      <div ref={btnRef} className="flex w-full justify-center" />
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
