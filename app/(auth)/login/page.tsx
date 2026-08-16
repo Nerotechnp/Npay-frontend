@@ -129,9 +129,9 @@ function GoogleButton() {
   // Mobile fix: when the GSI button does a full-page redirect on mobile and the
   // user presses the browser Back button, the login page is restored from bfcache.
   // The previously-loaded GSI instance is frozen/stale, so re-initializing it alone
-  // is unreliable and the button stops responding to clicks. To recover reliably we
-  // drop the stale `window.google` reference and re-inject the GSI script on
-  // bfcache restore, giving the page a fresh library + a freshly rendered button.
+  // is unreliable and the button stops responding to clicks. A manual browser
+  // refresh fixes it, so on bfcache restore we force a real reload — that reliably
+  // gives the page a fresh GSI library and a working button.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -180,14 +180,11 @@ function GoogleButton() {
     };
 
     const onPageShow = (e: PageTransitionEvent) => {
-      // bfcache restore (mobile "back"): force a clean GSI instance.
+      // bfcache restore (mobile "back"): the GSI instance is frozen and the button
+      // stops responding. A real reload reliably recovers it (a manual refresh does
+      // too). Defer so the navigation isn't blocked during the pageshow event.
       if (e.persisted) {
-        try {
-          (window as any).google = undefined;
-        } catch {
-          // ignore — script re-injection will redefine it anyway
-        }
-        loadScript();
+        setTimeout(() => window.location.reload(), 0);
       }
     };
     const onPageHide = () => {
