@@ -135,6 +135,11 @@ function GoogleButton() {
   // window loses focus when the Google sheet opens), and (2) render the button at
   // most once per mount/reset. Without the once-guard a needless wipe + re-render
   // makes the button blink and shifts the layout up/down.
+  //
+  // On mobile, a spurious `blur` can fire during page load (address-bar/script
+  // interaction), which would wrongly arm the recovery reset and re-inject the
+  // script on every reload — causing the blink + up/down jump. To avoid that we
+  // only treat a flow as started AFTER the user has actually clicked the button.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -142,6 +147,7 @@ function GoogleButton() {
     }
 
     let flowStarted = false;
+    let userInteracted = false;
     let rendered = false;
 
     const render = () => {
@@ -205,9 +211,10 @@ function GoogleButton() {
         // ignore
       }
     };
-    // Main window loses focus when the Google sheet/popup opens.
+    // Main window loses focus when the Google sheet/popup opens — but only count
+    // it as a flow if the user actually clicked the button first.
     const onBlur = () => {
-      flowStarted = true;
+      if (userInteracted) flowStarted = true;
     };
     // Only reset if a flow was actually started, so a normal page load
     // (where focus/visibility also fire) doesn't wipe + re-render the button.
@@ -220,7 +227,14 @@ function GoogleButton() {
         resetGsi();
       }
     };
-    const onPopState = () => resetGsi();
+    const onPopState = () => {
+      if (userInteracted) resetGsi();
+    };
+
+    // Arm the recovery path only after a real click on the Google button.
+    const onClickCapture = () => {
+      userInteracted = true;
+    };
 
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pagehide", onPageHide);
@@ -228,6 +242,7 @@ function GoogleButton() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("popstate", onPopState);
     document.addEventListener("visibilitychange", onVisible);
+    btnRef.current?.addEventListener("click", onClickCapture, true);
 
     const g = (window as any).google;
     if (g?.accounts?.id) render();
@@ -240,6 +255,7 @@ function GoogleButton() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("popstate", onPopState);
       document.removeEventListener("visibilitychange", onVisible);
+      btnRef.current?.removeEventListener("click", onClickCapture, true);
     };
   }, [clientId, handleGoogleCredential]);
 
