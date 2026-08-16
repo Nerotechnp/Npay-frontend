@@ -106,8 +106,7 @@ function GoogleButton() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const btnRef = useRef<HTMLDivElement>(null);
-  const skeletonRef = useRef<HTMLDivElement>(null);
+  const [gsiReady, setGsiReady] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleCredential = useCallback(
