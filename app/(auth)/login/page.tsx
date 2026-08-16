@@ -45,7 +45,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-[100svh] items-center justify-center bg-paper px-4 py-10">
+    <main className="relative flex min-h-[100svh] flex-col items-center justify-start bg-paper px-4 pt-[12svh] pb-10">
       <Link
         href="/"
         aria-label="Back to home"
