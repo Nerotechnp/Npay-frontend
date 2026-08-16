@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useServices, useDetectProduct } from "@/hooks/useServices";
@@ -24,18 +24,25 @@ export default function TopupPage() {
   const [amountNpr, setAmountNpr] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
+  const lastPrefix = useRef("");
 
   // Auto-detect the carrier from the phone number via the backend, which uses
   // each product's admin-managed phone_prefixes. No client-side hardcoding.
-  // Only call once we have a full 10-digit Nepal mobile number.
+  // Detect the carrier as soon as 3 digits are entered (the prefix is enough),
+  // and only hit the backend when the 3-digit prefix actually changes — so typing
+  // the rest of the number doesn't spam requests and the result feels instant.
   useEffect(() => {
     const digits = phone.replace(/\D/g, "");
-    if (digits.length !== 10) {
+    if (digits.length < 3) {
       setProvider(null);
+      lastPrefix.current = "";
       return;
     }
+    const prefix = digits.slice(0, 3);
+    if (prefix === lastPrefix.current) return;
+    lastPrefix.current = prefix;
     let cancelled = false;
-    detectProduct.mutate(phone, {
+    detectProduct.mutate(digits, {
       onSuccess: (p) => {
         if (!cancelled) setProvider(p);
       },
@@ -60,6 +67,11 @@ export default function TopupPage() {
     e.preventDefault();
     setError("");
 
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      setError("Enter a valid 10-digit Nepal mobile number.");
+      return;
+    }
     if (!provider) {
       setError("Enter a valid NTC or Ncell number.");
       return;
@@ -117,13 +129,16 @@ export default function TopupPage() {
           <form onSubmit={handleContinue} className="flex flex-col gap-4">
             <Input
               label="Phone number"
-              placeholder="98XXXXXXX or 97XXXXXXX"
+              placeholder="98XXXXXXX (10 digits)"
+              inputMode="numeric"
+              type="tel"
+              maxLength={10}
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
               required
             />
 
-            {phone.length >= 3 && (
+            {phone.replace(/\D/g, "").length >= 3 && (
               <p className={`text-xs ${provider ? "text-moss" : "text-ink-3"}`}>
                 {provider ? `Detected: ${provider.name}` : "Carrier not recognized yet — keep typing a valid NTC/Ncell number."}
               </p>

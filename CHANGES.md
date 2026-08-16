@@ -45,6 +45,14 @@ Made the app installable ("Add to Home Screen") on mobile.
 - `app/layout.tsx` — added `metadata.appleWebApp` + `metadata.icons`, and a `viewport` export with `themeColor: #dc2626`, `viewportFit: cover`.
 - `app/providers.tsx` — mounted `<PWARegister />` inside the provider tree.
 
+## 6. Mobile topup — early carrier detection
+**Files:** `app/(dashboard)/topup/page.tsx`, `Npay-backend/internal/handlers/config_handler.go`
+
+- Backend `POST /api/v1/products/detect` previously required **exactly 10 digits**; now accepts **≥3 digits** and uses the first 3 as the prefix, so the carrier is recognized as soon as the prefix is typed.
+- Frontend triggers detection at **3 digits** and only re-calls the backend when the 3-digit prefix actually changes (cached via a `lastPrefix` ref) — avoids request spam and feels instant ("too slow" fixed).
+- `Continue` now validates the number is **exactly 10 digits** ("Enter a valid 10-digit Nepal mobile number").
+- Phone input upgraded for mobile: `type="tel"`, `inputMode="numeric"`, `maxLength={10}`, and strips non-digits on change (numeric keypad, no stray characters).
+
 ## Notes
 - All changes pass `npx tsc --noEmit`.
 - Install prompt requires **production + HTTPS** (Android Chrome also needs the service worker, which only registers in production). For local testing use `npm run build && npm run start` over HTTPS/localhost.
