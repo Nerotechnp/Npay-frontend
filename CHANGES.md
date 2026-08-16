@@ -53,6 +53,12 @@ Made the app installable ("Add to Home Screen") on mobile.
 - `Continue` now validates the number is **exactly 10 digits** ("Enter a valid 10-digit Nepal mobile number").
 - Phone input upgraded for mobile: `type="tel"`, `inputMode="numeric"`, `maxLength={10}`, and strips non-digits on change (numeric keypad, no stray characters).
 
+## 8. Auth pages — Google button + OTP back arrow
+**Files:** `app/(auth)/login/page.tsx`, `app/(auth)/verify-otp/page.tsx`
+
+- **Google button stopped working after navigating back** (needed a refresh). Cause: the old code used Google's `renderButton()`, whose handlers go stale after the SPA remounts. Rewrote `GoogleButton` to re-`initialize()` the GSI client on every mount and trigger sign-in via `google.accounts.id.prompt()` on click — so it works reliably every time you return to the login page.
+- **Verify-OTP page** now has a back arrow (matching the login page style) at the top-left that returns to `/login`, for consistency and an easy way back.
+
 ## Notes
 - All changes pass `npx tsc --noEmit`.
 - Install prompt requires **production + HTTPS** (Android Chrome also needs the service worker, which only registers in production). For local testing use `npm run build && npm run start` over HTTPS/localhost.

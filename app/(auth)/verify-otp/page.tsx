@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { MoveLeft } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { setTokens } from "@/lib/auth";
 import { useAuthStore } from "@/store/authStore";
@@ -62,7 +64,15 @@ export default function VerifyOTPPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-paper px-4">
+      <Link
+        href="/login"
+        aria-label="Back to login"
+        className="absolute left-4 top-4 flex h-12 items-center gap-2 rounded-full px-4 text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
+      >
+        <MoveLeft className="h-6 w-10" strokeWidth={2.5} />
+        <span className="text-sm font-medium">Back</span>
+      </Link>
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="font-display text-2xl text-ink">Check your email</h1>

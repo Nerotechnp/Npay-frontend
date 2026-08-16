@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
@@ -98,84 +98,84 @@ function GoogleButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [scriptReady, setScriptReady] = useState(false);
-  const btnRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  async function handleGoogleCredential(idToken: string) {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await apiClient.post("/api/v1/auth/google", { id_token: idToken });
-      const { access_token, refresh_token } = res.data.data;
-      const { setTokens } = await import("@/lib/auth");
-      setTokens(access_token, refresh_token);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Google sign-in failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleGoogleCredential = useCallback(
+    async (idToken: string) => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await apiClient.post("/api/v1/auth/google", { id_token: idToken });
+        const { access_token, refresh_token } = res.data.data;
+        const { setTokens } = await import("@/lib/auth");
+        setTokens(access_token, refresh_token);
+        router.push("/dashboard");
+      } catch (err: any) {
+        setError(err?.response?.data?.error || "Google sign-in failed.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router]
+  );
 
+  // Load the GSI script once, then initialize the client on every mount so the
+  // button keeps working after navigating back to this page (the old renderButton
+  // approach left it unresponsive until a full refresh).
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
 
-    const renderGoogleButton = () => {
+    const initGoogle = () => {
       const g = (window as any).google;
-      if (!g?.accounts?.id || !btnRef.current) return;
+      if (!g?.accounts?.id) return;
       g.accounts.id.initialize({
         client_id: clientId,
         callback: (response: any) => {
           if (response?.credential) handleGoogleCredential(response.credential);
         },
+        auto_select: false,
       });
-      g.accounts.id.renderButton(btnRef.current, {
-        theme: "outline",
-        size: "large",
-        width: btnRef.current.clientWidth || 320,
-        type: "standard",
-        text: "continue_with",
-      });
-      setScriptReady(true);
+      setReady(true);
     };
 
-    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
-
-    if (existing && (window as any).google) {
-      renderGoogleButton();
+    const g = (window as any).google;
+    if (g?.accounts?.id) {
+      initGoogle();
       return;
     }
 
+    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
     const script = existing || document.createElement("script");
     if (!existing) {
       script.id = "gsi-client-script";
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
     }
-
-    script.onload = renderGoogleButton;
+    script.onload = initGoogle;
     script.onerror = () => setError("Failed to load Google sign-in.");
     if (!existing) document.body.appendChild(script);
-  }, []);
+  }, [clientId, handleGoogleCredential]);
+
+  if (!clientId) {
+    return <p className="text-xs text-danger">{error}</p>;
+  }
 
   return (
     <div>
-      <div ref={btnRef} className="flex w-full justify-center" />
-      {!scriptReady && (
-        <Button
-          type="button"
-          variant="secondary"
-          loading={loading}
-          className="w-full"
-          disabled
-        >
-          Continue with Google
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        loading={loading}
+        disabled={!ready}
+        onClick={() => (window as any).google?.accounts?.id?.prompt()}
+      >
+        Continue with Google
+      </Button>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
