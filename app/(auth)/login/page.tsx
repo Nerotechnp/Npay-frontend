@@ -208,8 +208,12 @@ function GoogleButton() {
       document.body.appendChild(script);
     };
 
+    // A persisted `pageshow` (bfcache restore) also fires on mobile reloads.
+    // Only reset if a real Google flow was started, otherwise leave the restored
+    // button as-is — an unconditional reset here wipes + re-renders the button,
+    // which is the blink/jump seen on mobile reload.
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) resetGsi();
+      if (e.persisted && userInteracted) resetGsi();
     };
     const onPageHide = () => {
       try {
