@@ -155,13 +155,16 @@ function GoogleButton() {
 
     let flowStarted = false;
     let userInteracted = false;
-    let rendered = false;
+    let forceRender = false;
 
     const render = () => {
       const g = (window as any).google;
       if (!g?.accounts?.id || !btnRef.current) return;
-      if (rendered) return;
-      rendered = true;
+      // If a healthy button is already in the DOM (e.g. restored from bfcache on
+      // a mobile reload) and we're not recovering from a dead flow, leave it
+      // alone — wiping + re-rendering here is what causes the blink on reload.
+      if (!forceRender && btnRef.current.children.length > 0) return;
+      forceRender = false;
       try {
         g.accounts.id.cancel();
       } catch {
@@ -191,7 +194,7 @@ function GoogleButton() {
     // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
     // button is guaranteed to be interactive again after a dismissed/abandoned flow.
     const resetGsi = () => {
-      rendered = false;
+      forceRender = true;
       try {
         (window as any).google = undefined;
       } catch {
