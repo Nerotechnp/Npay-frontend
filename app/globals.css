@@ -36,6 +36,11 @@
 
 html {
   scrollbar-gutter: stable;
+  /* Paint the app background immediately (before body) to avoid a white flash,
+     and disable the mobile elastic overscroll bounce that reads as "up/down". */
+  background-color: var(--color-paper);
+  overscroll-behavior: none;
+  color-scheme: light;
 }
 
 body {
@@ -44,6 +49,7 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
 }
 
 /* Smooth scrollbar (ePayNepal style) */
