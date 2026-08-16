@@ -279,7 +279,7 @@ function GoogleButton() {
 
   return (
     <div>
-      <div ref={btnRef} className="flex min-h-[44px] w-full justify-center" />
+      <div ref={btnRef} className="flex h-[44px] w-full justify-center" />
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
