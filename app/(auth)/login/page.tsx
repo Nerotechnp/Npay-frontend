@@ -122,21 +122,25 @@ function GoogleButton() {
     [router]
   );
 
-  // Render the branded GSI button. It opens the Google sign-in reliably (popup on
-  // desktop, full-page on mobile) WITHOUT needing One-Tap to be enabled in Google
-  // Cloud.
+  // Render the branded GSI button (default popup mode — no redirect_uri config
+  // needed in Google Cloud). On mobile the Google sheet is dismissed via the
+  // browser Back button, which leaves GSI thinking a sign-in flow is still "in
+  // progress", so the button goes dead. To recover we fully reset GSI (drop the
+  // stale global + re-inject the script) when the user returns from a flow:
+  // `focus`/`visibilitychange` (sheet/tab closed, main frame never went hidden)
+  // and `popstate`/`pageshow` (Back/Forward, bfcache restore).
   //
-  // Mobile fix: when the GSI button does a full-page redirect on mobile and the
-  // user presses the browser Back button, the login page is restored from bfcache.
-  // The previously-loaded GSI instance is frozen/stale, so re-initializing it alone
-  // is unreliable and the button stops responding to clicks. A manual browser
-  // refresh fixes it, so on bfcache restore we force a real reload — that reliably
-  // gives the page a fresh GSI library and a working button.
+  // We only do the heavy reset after a flow actually started (tracked via `blur`,
+  // since the main window loses focus when the Google sheet opens). On a normal
+  // page load these events also fire, and a needless reset would wipe + re-render
+  // the button and make the page jump up/down.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
+
+    let flowStarted = false;
 
     const render = () => {
       const g = (window as any).google;
@@ -167,7 +171,14 @@ function GoogleButton() {
       });
     };
 
-    const loadScript = () => {
+    // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
+    // button is guaranteed to be interactive again after a dismissed/abandoned flow.
+    const resetGsi = () => {
+      try {
+        (window as any).google = undefined;
+      } catch {
+        // ignore — re-injection redefines it anyway
+      }
       const existing = document.getElementById("gsi-client-script");
       if (existing) existing.remove();
       const script = document.createElement("script");
@@ -180,12 +191,8 @@ function GoogleButton() {
     };
 
     const onPageShow = (e: PageTransitionEvent) => {
-      // bfcache restore (mobile "back"): the GSI instance is frozen and the button
-      // stops responding. A real reload reliably recovers it (a manual refresh does
-      // too). Defer so the navigation isn't blocked during the pageshow event.
-      if (e.persisted) {
-        setTimeout(() => window.location.reload(), 0);
-      }
+      if (e.persisted) resetGsi();
+      else render();
     };
     const onPageHide = () => {
       try {
@@ -194,24 +201,40 @@ function GoogleButton() {
         // ignore
       }
     };
-    const onVisible = () => {
-      if (document.visibilityState === "visible") render();
+    // Main window loses focus when the Google sheet/popup opens.
+    const onBlur = () => {
+      flowStarted = true;
     };
+    // Only reset if a flow was actually started, so a normal page load
+    // (where focus/visibility also fire) doesn't wipe + re-render the button.
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && flowStarted) resetGsi();
+    };
+    const onFocus = () => {
+      if (flowStarted) {
+        flowStarted = false;
+        resetGsi();
+      }
+    };
+    const onPopState = () => resetGsi();
 
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("popstate", onPopState);
     document.addEventListener("visibilitychange", onVisible);
 
     const g = (window as any).google;
-    if (g?.accounts?.id) {
-      render();
-    } else {
-      loadScript();
-    }
+    if (g?.accounts?.id) render();
+    else resetGsi();
 
     return () => {
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("popstate", onPopState);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [clientId, handleGoogleCredential]);
