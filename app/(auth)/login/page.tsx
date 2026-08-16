@@ -21,6 +21,14 @@ export default function LoginPage() {
     if (getAccessToken()) router.replace("/dashboard");
   }, [router]);
 
+  // Focus the email field without scrolling the page, so mobile reloads don't
+  // jump up/down when the browser tries to bring the autofocused input into view.
+  useEffect(() => {
+    const el = document.getElementById("email") as HTMLInputElement | null;
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+    if (el && !coarse) el.focus({ preventScroll: true });
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -78,7 +86,6 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              autoFocus
             />
             {error && <p className="text-xs text-danger">{error}</p>}
             <Button type="submit" loading={loading} className="w-full">
