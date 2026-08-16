@@ -40,9 +40,10 @@ export default function LoginPage() {
       <Link
         href="/"
         aria-label="Back to home"
-        className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
+        className="absolute left-4 top-4 flex h-12 items-center gap-2 rounded-full px-4 text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
       >
         <MoveLeft className="h-6 w-10" strokeWidth={2.5} />
+        <span className="text-sm font-medium">Back</span>
       </Link>
 
       <div className="w-full max-w-sm">
