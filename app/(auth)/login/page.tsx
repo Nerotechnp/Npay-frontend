@@ -106,6 +106,7 @@ function GoogleButton() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gsiReady, setGsiReady] = useState(false);
   const btnRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -189,6 +190,7 @@ function GoogleButton() {
         type: "standard",
         text: "continue_with",
       });
+      setGsiReady(true);
     };
 
     // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
@@ -279,7 +281,20 @@ function GoogleButton() {
 
   return (
     <div>
-      <div ref={btnRef} className="flex h-[44px] w-full justify-center" />
+      <div className="relative h-[44px] w-full">
+        {/* Skeleton placeholder sits behind the GSI target so the button slot is
+            filled instantly and the real Google button replaces it seamlessly
+            (no blank -> pop). It's a sibling (not inside btnRef) so React never
+            fights GSI for that node's children. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center gap-3 rounded-lg border border-line-2 bg-paper ${gsiReady ? "hidden" : ""}`}
+        >
+          <span className="h-4 w-4 rounded-full bg-line-2" />
+          <span className="h-3 w-28 max-w-[55%] rounded bg-line-2 animate-pulse" />
+        </div>
+        <div ref={btnRef} className="absolute inset-0 flex items-center justify-center" />
+      </div>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
