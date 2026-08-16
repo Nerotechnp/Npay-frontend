@@ -1,4 +1,4 @@
-# npay-frontend (Next.js)
+# npay-frontend (Next.js) np
 
 Matches the `Npay-backend` Go API: passwordless login (email OTP + Google),
 service catalog, payment flow, transaction history.
