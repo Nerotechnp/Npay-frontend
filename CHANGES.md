@@ -56,7 +56,7 @@ Made the app installable ("Add to Home Screen") on mobile.
 ## 8. Auth pages — Google button + OTP back arrow
 **Files:** `app/(auth)/login/page.tsx`, `app/(auth)/verify-otp/page.tsx`
 
-- **Google button stopped working after navigating back** (needed a refresh). Cause: the old code used Google's `renderButton()`, whose handlers go stale after the SPA remounts. Rewrote `GoogleButton` to re-`initialize()` the GSI client on every mount and trigger sign-in via `google.accounts.id.prompt()` on click — so it works reliably every time you return to the login page.
+- **Google button stopped working after navigating back** (needed a refresh). Cause: GSI's `renderButton()` handlers go stale after the SPA remounts. `GoogleButton` now re-`initialize()`s and re-renders the branded Google button on **every mount**, calling `google.accounts.id.cancel()` first to clear any stale GSI state — so it works reliably every time you return to the login page. (An earlier attempt used `prompt()`, but that needs One-Tap config and didn't trigger the flow.)
 - **Verify-OTP page** now has a back arrow (matching the login page style) at the top-left that returns to `/login`, for consistency and an easy way back.
 
 ## Notes

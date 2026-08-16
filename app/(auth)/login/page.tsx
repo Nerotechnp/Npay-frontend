@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
@@ -96,9 +96,9 @@ export default function LoginPage() {
 
 function GoogleButton() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const btnRef = useRef<HTMLDivElement>(null);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleCredential = useCallback(
@@ -120,18 +120,23 @@ function GoogleButton() {
     [router]
   );
 
-  // Load the GSI script once, then initialize the client on every mount so the
-  // button keeps working after navigating back to this page (the old renderButton
-  // approach left it unresponsive until a full refresh).
+  // Re-initialize + re-render the Google button on every mount (cancel any stale
+  // GSI state first) so it keeps working after navigating back to the login page —
+  // the previous render left it unresponsive until a full refresh.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
 
-    const initGoogle = () => {
+    const render = () => {
       const g = (window as any).google;
-      if (!g?.accounts?.id) return;
+      if (!g?.accounts?.id || !btnRef.current) return;
+      try {
+        g.accounts.id.cancel();
+      } catch {
+        // no prompt open — ignore
+      }
       g.accounts.id.initialize({
         client_id: clientId,
         callback: (response: any) => {
@@ -139,12 +144,18 @@ function GoogleButton() {
         },
         auto_select: false,
       });
-      setReady(true);
+      g.accounts.id.renderButton(btnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: btnRef.current.clientWidth || 320,
+        type: "standard",
+        text: "continue_with",
+      });
     };
 
     const g = (window as any).google;
     if (g?.accounts?.id) {
-      initGoogle();
+      render();
       return;
     }
 
@@ -155,7 +166,7 @@ function GoogleButton() {
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
     }
-    script.onload = initGoogle;
+    script.onload = render;
     script.onerror = () => setError("Failed to load Google sign-in.");
     if (!existing) document.body.appendChild(script);
   }, [clientId, handleGoogleCredential]);
@@ -166,16 +177,7 @@ function GoogleButton() {
 
   return (
     <div>
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full"
-        loading={loading}
-        disabled={!ready}
-        onClick={() => (window as any).google?.accounts?.id?.prompt()}
-      >
-        Continue with Google
-      </Button>
+      <div ref={btnRef} className="flex w-full justify-center" />
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
