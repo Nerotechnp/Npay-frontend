@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { MoveLeft } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
@@ -40,9 +40,9 @@ export default function LoginPage() {
       <Link
         href="/"
         aria-label="Back to home"
-        className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
+        className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
       >
-        <ArrowLeft className="h-5 w-5" />
+        <MoveLeft className="h-6 w-10" strokeWidth={2.5} />
       </Link>
 
       <div className="w-full max-w-sm">
@@ -123,15 +123,7 @@ function GoogleButton() {
       return;
     }
 
-    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
-    const script = existing || document.createElement("script");
-    if (!existing) {
-      script.id = "gsi-client-script";
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-    }
-
-    script.onload = () => {
+    const renderGoogleButton = () => {
       const g = (window as any).google;
       if (!g?.accounts?.id || !btnRef.current) return;
       g.accounts.id.initialize({
@@ -149,6 +141,22 @@ function GoogleButton() {
       });
       setScriptReady(true);
     };
+
+    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
+
+    if (existing && (window as any).google) {
+      renderGoogleButton();
+      return;
+    }
+
+    const script = existing || document.createElement("script");
+    if (!existing) {
+      script.id = "gsi-client-script";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+    }
+
+    script.onload = renderGoogleButton;
     script.onerror = () => setError("Failed to load Google sign-in.");
     if (!existing) document.body.appendChild(script);
   }, []);
