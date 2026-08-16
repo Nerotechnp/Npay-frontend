@@ -59,6 +59,13 @@ Made the app installable ("Add to Home Screen") on mobile.
 - **Google button stopped working after navigating back** (needed a refresh). Cause: GSI's `renderButton()` handlers go stale after the SPA remounts. `GoogleButton` now re-`initialize()`s and re-renders the branded Google button on **every mount**, calling `google.accounts.id.cancel()` first to clear any stale GSI state — so it works reliably every time you return to the login page. (An earlier attempt used `prompt()`, but that needs One-Tap config and didn't trigger the flow.)
 - **Verify-OTP page** now has a back arrow (matching the login page style) at the top-left that returns to `/login`, for consistency and an easy way back.
 
+## 9. Google login → bounce/reload loop after sign-in
+**Files:** `app/(auth)/login/page.tsx`, `hooks/useAuth.ts`
+
+- After a successful Google sign-in the site reloaded 2-3 times. Cause: `handleGoogleCredential` only stored the tokens (`setTokens`) and never set the `user`, so the dashboard guard saw `user === null` and redirected to `/login`, while the login guard (token present) bounced straight back to `/dashboard` — a redirect loop.
+- Fix: `handleGoogleCredential` now also calls `useAuthStore.getState().setUser(user)` (the backend already returns `user`), so the dashboard sees an authenticated user immediately and does not redirect.
+- Belt-and-suspenders: `useAuth` now sets `isLoading(true)` while fetching the profile, so layout guards never bounce during the (brief) resolve window.
+
 ## Notes
 - All changes pass `npx tsc --noEmit`.
 - Install prompt requires **production + HTTPS** (Android Chrome also needs the service worker, which only registers in production). For local testing use `npm run build && npm run start` over HTTPS/localhost.

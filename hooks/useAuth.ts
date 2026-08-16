@@ -16,6 +16,7 @@ export function useAuth() {
       return;
     }
 
+    setLoading(true);
     apiClient
       .get<ApiSuccess<User>>("/api/v1/user/profile")
       .then((res) => setUser(res.data.data))

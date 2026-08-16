@@ -6,6 +6,7 @@ import Link from "next/link";
 import { MoveLeft } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
+import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -107,9 +108,13 @@ function GoogleButton() {
       setError("");
       try {
         const res = await apiClient.post("/api/v1/auth/google", { id_token: idToken });
-        const { access_token, refresh_token } = res.data.data;
+        const { access_token, refresh_token, user } = res.data.data;
         const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
+        // Store the user immediately so the dashboard guard sees an authenticated
+        // user on arrival — otherwise it bounces back to /login (token present)
+        // and reloads 2-3 times before settling.
+        useAuthStore.getState().setUser(user);
         router.push("/dashboard");
       } catch (err: any) {
         setError(err?.response?.data?.error || "Google sign-in failed.");
@@ -121,8 +126,10 @@ function GoogleButton() {
   );
 
   // Re-initialize + re-render the Google button on every mount (cancel any stale
-  // GSI state first) so it keeps working after navigating back to the login page —
-  // the previous render left it unresponsive until a full refresh.
+  // GSI state first) so it keeps working after navigating back to the login page.
+  // On mobile, Google OAuth does a full-page redirect, and "back" restores the
+  // page from the browser bfcache WITHOUT re-running this effect — leaving the
+  // button dead. The `pageshow` listener re-renders it when restored from cache.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -153,22 +160,30 @@ function GoogleButton() {
       });
     };
 
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) render();
+    };
+    window.addEventListener("pageshow", onPageShow);
+
     const g = (window as any).google;
     if (g?.accounts?.id) {
       render();
-      return;
+    } else {
+      const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
+      const script = existing || document.createElement("script");
+      if (!existing) {
+        script.id = "gsi-client-script";
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+      }
+      script.onload = render;
+      script.onerror = () => setError("Failed to load Google sign-in.");
+      if (!existing) document.body.appendChild(script);
     }
 
-    const existing = document.getElementById("gsi-client-script") as HTMLScriptElement | null;
-    const script = existing || document.createElement("script");
-    if (!existing) {
-      script.id = "gsi-client-script";
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-    }
-    script.onload = render;
-    script.onerror = () => setError("Failed to load Google sign-in.");
-    if (!existing) document.body.appendChild(script);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, [clientId, handleGoogleCredential]);
 
   if (!clientId) {
