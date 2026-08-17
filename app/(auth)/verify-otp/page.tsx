@@ -44,7 +44,9 @@ export default function VerifyOTPPage() {
       setTokens(access_token, refresh_token);
       setUser(user);
       sessionStorage.removeItem("pending_email");
-      router.push("/dashboard");
+      // Hard navigation so the new token cookie is sent on the first request
+      // (a soft router.push can hit the middleware before the cookie applies).
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err?.response?.data?.error || "That code didn't work. Try again.");
     } finally {

@@ -103,11 +103,11 @@ export default function LoginPage() {
 }
 
 function GoogleButton() {
-  const router = useRouter();
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const btnRef = useRef<HTMLDivElement>(null);
+  const gRef = useRef<any>(null);
 
   const handleCredential = useCallback(
     async (idToken: string) => {
@@ -117,19 +117,34 @@ function GoogleButton() {
         const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
         useAuthStore.getState().setUser(user);
-        router.push("/dashboard");
+        // Hard navigation (not router.push) so the freshly-set token cookie is
+        // sent on the first request — a soft push can reach the middleware
+        // before the cookie is applied, bouncing back to /login.
+        window.location.href = "/dashboard";
       } catch (err: any) {
         setError(err?.response?.data?.error || "Google sign-in failed.");
       }
     },
-    [router]
+    []
   );
 
-  // Use the "Sign in with Google" library (google.accounts.id), which returns
-  // an ID token (response.credential) directly — exactly what the backend
-  // verifies. The OAuth2 token client (google.accounts.oauth2) only returns an
-  // access token and is the wrong tool here. renderButton() always opens the
-  // account chooser for both signed-in and signed-out users.
+  // Render Google's own "Continue with Google" button, which returns an ID
+  // token (response.credential) directly. renderButton() reliably opens the
+  // account chooser for both signed-in and signed-out users (unlike the OAuth2
+  // token client, which only returns an access token, and prompt(), which can
+  // fail with a FedCM NetworkError).
+  const renderGoogleButton = useCallback(() => {
+    const g = gRef.current;
+    if (!g?.accounts?.id || !btnRef.current) return;
+    btnRef.current.innerHTML = "";
+    g.accounts.id.renderButton(btnRef.current, {
+      theme: "outline",
+      size: "large",
+      width: btnRef.current.clientWidth || 320,
+      text: "continue_with",
+    });
+  }, []);
+
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -139,6 +154,7 @@ function GoogleButton() {
     const init = () => {
       const g = (window as any).google;
       if (!g?.accounts?.id) return;
+      gRef.current = g;
       g.accounts.id.initialize({
         client_id: clientId,
         callback: (response: any) => {
@@ -146,15 +162,8 @@ function GoogleButton() {
           else setError("Google sign-in failed.");
         },
       });
-      if (btnRef.current) {
-        g.accounts.id.renderButton(btnRef.current, {
-          theme: "outline",
-          size: "large",
-          width: btnRef.current.clientWidth || 320,
-          text: "continue_with",
-        });
-        setReady(true);
-      }
+      renderGoogleButton();
+      setReady(true);
     };
 
     if ((window as any).google?.accounts?.id) {
@@ -174,7 +183,15 @@ function GoogleButton() {
     } else {
       existing.addEventListener("load", init, { once: true });
     }
-  }, [clientId, handleCredential]);
+
+    // If the user cancels the Google account chooser, the rendered button can
+    // get stuck in a spinner state. Re-render a fresh button when focus returns.
+    const onFocus = () => {
+      if (ready) setTimeout(renderGoogleButton, 300);
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [clientId, handleCredential, renderGoogleButton, ready]);
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
