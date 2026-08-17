@@ -71,6 +71,14 @@ body {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
 }
 
+/* Admin data tables: subtle row hover for scanability */
+.admin-table tbody tr {
+  transition: background-color 150ms ease;
+}
+.admin-table tbody tr:hover {
+  background-color: var(--color-paper);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

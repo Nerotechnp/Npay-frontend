@@ -38,7 +38,7 @@ export default function AdminTransactionsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">Transactions</h1>
+      <h1 className="font-display text-3xl text-ink">Transactions</h1>
       <p className="mt-1 text-sm text-ink-3">
         Every payment across all users. Override a status manually if the automated flow needs a nudge.
       </p>
@@ -60,8 +60,8 @@ export default function AdminTransactionsPage() {
         </Select>
       </div>
 
-      <Card className="mt-4 overflow-x-auto p-0">
-        <table className="w-full text-left text-sm">
+      <Card className="mt-4 overflow-x-auto rounded-2xl p-0">
+        <table className="admin-table w-full text-left text-sm">
           <thead className="border-b border-line text-xs text-ink-3">
             <tr>
               <th className="bg-paper px-5 py-3 font-medium">Recipient</th>

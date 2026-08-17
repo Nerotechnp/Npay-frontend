@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">Users</h1>
+      <h1 className="font-display text-3xl text-ink">Users</h1>
       <p className="mt-1 text-sm text-ink-3">Block accounts or grant admin access.</p>
 
       <div className="relative mt-6 max-w-sm">
@@ -35,8 +35,8 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      <Card className="mt-4 overflow-x-auto p-0">
-        <table className="w-full text-left text-sm">
+      <Card className="mt-4 overflow-x-auto rounded-2xl p-0">
+        <table className="admin-table w-full text-left text-sm">
           <thead className="border-b border-line text-xs text-ink-3">
             <tr>
               <th className="bg-paper px-5 py-3 font-medium">Name / email</th>
