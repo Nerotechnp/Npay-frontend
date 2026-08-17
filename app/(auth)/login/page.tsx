@@ -227,7 +227,7 @@ function GoogleButton() {
 
   return (
     <div>
-      <div ref={btnRef} className="flex w-full justify-center" />
+      <div ref={btnRef} className="flex min-h-[44px] w-full justify-center" />
       {!ready && (
         <button
           type="button"
