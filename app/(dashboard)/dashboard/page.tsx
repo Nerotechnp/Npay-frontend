@@ -1,7 +1,8 @@
 "use client";
 
-import { Smartphone, Zap, Droplets, Mountain, Package, Wifi } from "lucide-react";
+import { Smartphone, Zap, Droplets, Mountain, Package, Wifi, ArrowRight } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 const categoryIcon: Record<string, any> = {
@@ -25,17 +26,27 @@ const CATEGORY_LABEL: Record<string, string> = {
   transport: "Transport",
 };
 
+function useFirstName() {
+  const { user } = useAuth();
+  if (!user) return "";
+  const source = user.full_name || user.email || "";
+  const first = source.split(" ")[0];
+  return first.includes("@") ? first.split("@")[0] : first;
+}
+
 export default function DashboardPage() {
   const { data: products, isLoading, isError } = useServices();
   const router = useRouter();
+  const firstName = useFirstName();
 
   if (isLoading) {
     return (
       <div>
-        <h1 className="font-display text-2xl text-ink">What would you like to pay?</h1>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-line" />
+        <p className="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-line" />
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-xl bg-line" />
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-line" />
           ))}
         </div>
       </div>
@@ -77,12 +88,19 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-ink">What would you like to pay?</h1>
-      <p className="mt-1 text-sm text-ink-3">Choose a product, enter the details, and pay securely with your card.</p>
+      <div className="mb-8">
+        {firstName ? (
+          <p className="text-sm font-medium text-ink-3">Welcome back, {firstName}</p>
+        ) : null}
+        <h1 className="font-display text-2xl text-ink sm:text-3xl">What would you like to pay?</h1>
+        <p className="mt-1.5 text-sm text-ink-3">
+          Choose a product, enter the details, and pay securely with your card.
+        </p>
+      </div>
 
       {tiles.length === 0 && <p className="mt-8 text-sm text-ink-3">No products are available right now.</p>}
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
         {tiles.map((t) => {
           const Icon = t.icon;
           return (
@@ -90,19 +108,20 @@ export default function DashboardPage() {
               key={t.key}
               type="button"
               onClick={() => router.push(t.href)}
-              className="group flex flex-col gap-3 rounded-xl border border-line bg-white p-5 text-left shadow-sm transition-all hover:border-moss"
+              className="group flex flex-col gap-3 rounded-2xl border border-line bg-white p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-moss/40 hover:shadow-lg hover:shadow-moss/5 active:scale-[0.98]"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-moss/10 text-moss transition-colors group-hover:bg-moss/15">
                 <Icon className="h-5 w-5" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-sm font-semibold text-ink">{t.name}</h3>
-                <p className="mt-0.5 text-xs capitalize text-ink-3">
+                <p className="mt-0.5 line-clamp-2 text-xs capitalize text-ink-3">
                   {t.items.length > 1
                     ? t.items.map((i: any) => i.name).join(" · ")
                     : t.category}
                 </p>
               </div>
+              <ArrowRight className="h-4 w-4 text-ink-3 transition-all group-hover:translate-x-1 group-hover:text-moss" />
             </button>
           );
         })}
@@ -110,4 +129,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MoveLeft } from "lucide-react";
+import { MoveLeft, ShieldCheck, Globe, Zap } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
 import { useAuthStore } from "@/store/authStore";
@@ -45,30 +45,37 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-[100svh] flex-col items-center justify-start bg-paper px-4 pt-[12svh] pb-10">
+    <main className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-paper px-4 py-10">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]"
+      />
+
       <Link
         href="/"
         aria-label="Back to home"
-        className="absolute left-4 top-4 flex h-12 items-center gap-2 rounded-full px-4 text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
+        className="absolute left-4 top-4 z-10 flex h-11 items-center gap-2 rounded-full px-4 text-ink-3 transition-colors hover:bg-paper hover:text-ink sm:left-6 sm:top-6"
       >
-        <MoveLeft className="h-6 w-10" strokeWidth={2.5} />
+        <MoveLeft className="h-5 w-5" strokeWidth={2.5} />
         <span className="text-sm font-medium">Back</span>
       </Link>
 
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-lg font-extrabold tracking-tight text-white">
+      <div className="relative w-full max-w-md">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-moss to-moss2 text-xl font-extrabold tracking-tight text-white shadow-lg shadow-moss/25">
             N
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-            Welcome to Npay
-          </h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">Welcome back</h1>
           <p className="mt-2 text-sm text-ink-3">
-            Pay bills back home, from anywhere.
+            Pay bills back home, from anywhere. Sign in to continue.
           </p>
         </div>
 
-        <Card className="p-5 sm:p-6">
+        <Card className="p-6 shadow-md shadow-moss/5 sm:p-7">
           <GoogleButton />
 
           <div className="my-5 flex items-center gap-3">
@@ -87,12 +94,32 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            {error && <p className="text-xs text-danger">{error}</p>}
-            <Button type="submit" loading={loading} className="w-full">
+            {error && (
+              <div className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">
+                {error}
+              </div>
+            )}
+            <Button type="submit" loading={loading} className="mt-1 w-full py-3 text-base">
               Send code
             </Button>
           </form>
         </Card>
+
+        <div className="mt-6 grid grid-cols-3 gap-2">
+          {[
+            { icon: ShieldCheck, label: "Secure" },
+            { icon: Globe, label: "Any currency" },
+            { icon: Zap, label: "Instant" },
+          ].map((feature) => (
+            <div
+              key={feature.label}
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-white px-2 py-3 text-center"
+            >
+              <feature.icon className="h-4 w-4 text-moss" />
+              <span className="text-xs font-medium text-ink-3">{feature.label}</span>
+            </div>
+          ))}
+        </div>
 
         <p className="mt-6 text-center text-xs text-ink-3">
           No password needed. We&apos;ll email you a one-time code.
