@@ -18,7 +18,7 @@ export function HomeNavbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-line-2/60 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-transparent bg-transparent backdrop-blur-md md:border-line-2/60 md:bg-white/80">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-5">
         <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-moss text-sm font-extrabold tracking-tight text-white">

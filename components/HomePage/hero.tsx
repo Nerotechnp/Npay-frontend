@@ -23,7 +23,7 @@ const quickActions = [
 const recentActivity = [
   { name: "NTC Top-up", detail: "Prepaid · 9841******", amount: "Rs 500", status: "Done", tone: "text-green-600" },
   { name: "Data Pack", detail: "Ncell · 10GB", amount: "Rs 999", status: "Done", tone: "text-green-600" },
-  { name: "NEA Bill", detail: "Kathmandu Metro", amount: "Rs 1,240", status: "Done", tone: "text-green-600" },
+  { name: "NEA Bill", detail: "Electricity", amount: "Rs 1,240", status: "Done", tone: "text-green-600" },
 ];
 
 export function Hero() {
@@ -101,8 +101,7 @@ export function Hero() {
               <div className="rounded-[1.5rem] bg-gradient-to-br from-moss to-moss2 p-5 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-white/70">Namaste, Ram</p>
-                    <p className="text-2xl font-bold tracking-tight">Rs 2,450</p>
+                    <p className="text-sm text-white/70">Namaste, Ram</p>
                   </div>
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium">
                     <ShieldCheck className="h-3.5 w-3.5" /> Secured
@@ -148,7 +147,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="absolute -right-2 -top-4 flex items-center gap-2 rounded-2xl border border-line-2 bg-white px-4 py-3 shadow-xl sm:-right-4 sm:-top-5">
+            <div className="absolute -top-10 -right-2 flex items-center gap-2 rounded-2xl border border-line-2 bg-white px-4 py-3 shadow-xl sm:-right-4 sm:-top-12">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
               <div className="leading-tight">
                 <p className="text-sm font-semibold text-ink">Payment done</p>
