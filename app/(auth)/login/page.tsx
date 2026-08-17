@@ -146,10 +146,10 @@ function GoogleButton() {
         const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
         useAuthStore.getState().setUser(user);
-        // Client-side navigation: setTokens() sets the cookie synchronously
-        // before this runs, so middleware already sees it. A full reload
-        // (window.location.href) caused a brief login-page flash.
-        router.push("/dashboard");
+        // Hard navigation so the freshly-set token cookie is sent on the
+        // first request (a client-side router.push can miss it, bouncing
+        // /dashboard -> /login before settling on the dashboard).
+        window.location.href = "/dashboard";
       } catch (err: any) {
         setError(err?.response?.data?.error || "Google sign-in failed.");
       }

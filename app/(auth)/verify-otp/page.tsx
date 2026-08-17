@@ -44,11 +44,12 @@ export default function VerifyOTPPage() {
       setTokens(access_token, refresh_token);
       setUser(user);
       sessionStorage.removeItem("pending_email");
-      // Client-side navigation: the token cookie is set synchronously by
-      // setTokens() above, so middleware already sees it on this request.
-      // A full reload (window.location.href) caused a brief login-page flash
-      // because the store reset and re-bootstrapped on the new document.
-      router.push("/dashboard");
+      // Hard navigation: setting the token cookie via document.cookie right
+      // before a client-side router.push isn't reliably included in that
+      // first request, so the edge middleware bounces /dashboard -> /login
+      // and you land on the dashboard only after a second hop. A full reload
+      // guarantees the browser sends the cookie, so middleware lets us through.
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err?.response?.data?.error || "That code didn't work. Try again.");
     } finally {
