@@ -4,6 +4,7 @@ import { ServicesList } from "@/components/HomePage/service-list";
 import { HowItWorksList } from "@/components/HomePage/how-to-use";
 import { Features } from "@/components/HomePage/features";
 import { Faq } from "@/components/HomePage/faq";
+import { Cta } from "@/components/HomePage/cta";
 import { Footer } from "@/components/HomePage/footer";
 
 export default function HomePage() {
@@ -16,6 +17,7 @@ export default function HomePage() {
         <HowItWorksList />
         <Features />
         <Faq />
+        <Cta />
       </main>
       <Footer />
     </>

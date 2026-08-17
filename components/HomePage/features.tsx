@@ -1,4 +1,5 @@
 import { Shield, Zap, Globe, BarChart3, RefreshCw, Headphones } from "lucide-react";
+import { Reveal } from "@/components/ui/Reveal";
 
 const features = [
   {
@@ -57,21 +58,20 @@ export function Features() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group rounded-2xl border border-line bg-white p-6 transition-all hover:border-moss/25 hover:shadow-md"
-            >
-              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-moss/10 transition-colors group-hover:bg-moss/15">
-                <feature.icon size={22} className="text-moss" />
+          {features.map((feature, i) => (
+            <Reveal key={feature.title} delay={(i % 3) * 100}>
+              <div className="group h-full rounded-2xl border border-line bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-moss/25 hover:shadow-lg hover:shadow-moss/5">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-moss/10 transition-colors group-hover:bg-moss/15">
+                  <feature.icon size={22} className="text-moss" />
+                </div>
+                <h3 className="mb-2 text-base font-semibold text-ink">
+                  {feature.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-ink-3">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="mb-2 text-base font-semibold text-ink">
-                {feature.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-ink-3">
-                {feature.description}
-              </p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

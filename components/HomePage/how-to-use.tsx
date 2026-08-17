@@ -1,4 +1,5 @@
 import { LogIn, Wallet, Smartphone, CheckCircle2 } from "lucide-react";
+import { Reveal } from "@/components/ui/Reveal";
 
 const steps = [
   {
@@ -43,36 +44,31 @@ export function HowItWorksList() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, index) => (
-            <div
-              key={step.title}
-              className="relative rounded-2xl border border-line bg-white p-6 shadow-sm"
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-moss/10">
-                  <step.icon size={20} className="text-moss" />
+        <div className="relative">
+          <div
+            aria-hidden="true"
+            className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-line-2 to-transparent lg:block"
+          />
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step, index) => (
+              <Reveal key={step.title} delay={index * 100}>
+                <div className="relative flex h-full flex-col items-center text-center">
+                  <div className="relative z-10 mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-line-2 bg-white text-lg font-bold text-moss shadow-sm ring-4 ring-paper">
+                    {index + 1}
+                  </div>
+                  <div className="flex flex-col items-center rounded-2xl border border-line bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md h-full">
+                    <step.icon size={22} className="mb-3 text-moss" />
+                    <h3 className="mb-2 text-base font-semibold text-ink">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-ink-3">
+                      {step.description}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-ink-3">
-                  Step {index + 1}
-                </span>
-              </div>
-
-              <h3 className="mb-2 text-base font-semibold text-ink">
-                {step.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-ink-3">
-                {step.description}
-              </p>
-
-              {index < steps.length - 1 && (
-                <div
-                  aria-hidden="true"
-                  className="absolute -right-3 top-1/2 hidden h-px w-6 bg-line lg:block"
-                />
-              )}
-            </div>
-          ))}
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </section>

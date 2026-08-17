@@ -1,6 +1,7 @@
 import { Smartphone, Zap, Globe } from "lucide-react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Reveal } from "@/components/ui/Reveal";
 
 const services = [
   {
@@ -47,35 +48,35 @@ export function ServicesList() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-3">
-          {services.map((service) => (
-            <div
-              key={service.title}
-              className="group relative flex flex-col rounded-2xl border border-line bg-white p-7 shadow-sm transition-all hover:border-moss/30 hover:shadow-md"
-            >
-              {service.badge && (
-                <span className="mb-4 inline-flex w-fit rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold text-moss">
-                  {service.badge}
-                </span>
-              )}
+          {services.map((service, i) => (
+            <Reveal key={service.title} delay={i * 100}>
+              <div className="group flex h-full flex-col rounded-2xl border border-line bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-moss/30 hover:shadow-xl hover:shadow-moss/5">
+                {service.badge && (
+                  <span className="mb-4 inline-flex w-fit rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold text-moss">
+                    {service.badge}
+                  </span>
+                )}
 
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss/10">
-                <service.icon size={24} className="text-moss" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-moss/10 transition-colors group-hover:bg-moss/15">
+                  <service.icon size={24} className="text-moss" />
+                </div>
+
+                <h3 className="mb-2 text-lg font-semibold text-ink">
+                  {service.title}
+                </h3>
+                <p className="flex-grow text-sm leading-relaxed text-ink-3">
+                  {service.description}
+                </p>
+
+                <Link
+                  href={service.href}
+                  className="mt-5 flex w-fit items-center gap-1 text-sm font-medium text-moss"
+                >
+                  Learn more
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
-
-              <h3 className="mb-2 text-lg font-semibold text-ink">
-                {service.title}
-              </h3>
-              <p className="flex-grow text-sm leading-relaxed text-ink-3">
-                {service.description}
-              </p>
-
-              <Link
-                href={service.href}
-                className="mt-5 flex items-center gap-1 text-sm font-medium text-moss opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-              >
-                Learn more <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
