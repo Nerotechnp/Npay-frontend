@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoveLeft, ShieldCheck, Globe, Zap } from "lucide-react";
 import apiClient from "@/lib/api-client";
-import { getAccessToken } from "@/lib/auth";
+import { getAccessToken, setTokens } from "@/lib/auth";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -143,7 +143,6 @@ function GoogleButton() {
       try {
         const res = await apiClient.post("/api/v1/auth/google", { id_token: idToken });
         const { access_token, refresh_token, user } = res.data.data;
-        const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
         useAuthStore.getState().setUser(user);
         // Hard navigation so the freshly-set token cookie is sent on the
