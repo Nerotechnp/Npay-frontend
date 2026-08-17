@@ -44,9 +44,11 @@ export default function VerifyOTPPage() {
       setTokens(access_token, refresh_token);
       setUser(user);
       sessionStorage.removeItem("pending_email");
-      // Hard navigation so the new token cookie is sent on the first request
-      // (a soft router.push can hit the middleware before the cookie applies).
-      window.location.href = "/dashboard";
+      // Client-side navigation: the token cookie is set synchronously by
+      // setTokens() above, so middleware already sees it on this request.
+      // A full reload (window.location.href) caused a brief login-page flash
+      // because the store reset and re-bootstrapped on the new document.
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err?.response?.data?.error || "That code didn't work. Try again.");
     } finally {

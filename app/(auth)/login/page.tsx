@@ -109,6 +109,8 @@ function GoogleButton() {
   const btnRef = useRef<HTMLDivElement>(null);
   const gRef = useRef<any>(null);
 
+  const router = useRouter();
+
   const handleCredential = useCallback(
     async (idToken: string) => {
       try {
@@ -117,15 +119,15 @@ function GoogleButton() {
         const { setTokens } = await import("@/lib/auth");
         setTokens(access_token, refresh_token);
         useAuthStore.getState().setUser(user);
-        // Hard navigation (not router.push) so the freshly-set token cookie is
-        // sent on the first request — a soft push can reach the middleware
-        // before the cookie is applied, bouncing back to /login.
-        window.location.href = "/dashboard";
+        // Client-side navigation: setTokens() sets the cookie synchronously
+        // before this runs, so middleware already sees it. A full reload
+        // (window.location.href) caused a brief login-page flash.
+        router.push("/dashboard");
       } catch (err: any) {
         setError(err?.response?.data?.error || "Google sign-in failed.");
       }
     },
-    []
+    [router]
   );
 
   // Render Google's own "Continue with Google" button, which returns an ID

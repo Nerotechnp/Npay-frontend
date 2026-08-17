@@ -10,6 +10,13 @@ export function useAuth() {
   const { user, isLoading, setUser, setLoading, logout } = useAuthStore();
 
   useEffect(() => {
+    // Skip bootstrap if we already have a user. This matters because useAuth()
+    // is called by both the admin layout and its child pages. Without the
+    // guard, a child page would call setLoading(true) on mount, which makes the
+    // layout (which gates children behind isLoading) unmount and remount the
+    // page forever — an infinite loading loop on e.g. /admin/users.
+    if (user) return;
+
     const token = getAccessToken();
     if (!token) {
       setLoading(false);
@@ -28,8 +35,7 @@ export function useAuth() {
         clearTokens();
         setUser(null);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, setUser, setLoading]);
 
   return { user, isLoading, logout };
 }
