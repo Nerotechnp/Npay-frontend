@@ -28,7 +28,7 @@ const recentActivity = [
 
 export function Hero() {
   return (
-    <section className="relative -mt-16 overflow-hidden bg-gradient-to-b from-moss/[0.05] via-moss/[0.02] to-paper">
+    <section className="relative overflow-hidden bg-gradient-to-b from-moss/[0.05] via-moss/[0.02] to-paper">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -top-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]"
@@ -38,7 +38,7 @@ export function Hero() {
         className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]"
       />
 
-      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-5 sm:pb-20 sm:pt-28 lg:pt-32">
+      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-5 sm:pb-20 sm:pt-20 lg:pt-24">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-10">
           <div className="text-center lg:text-left">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-moss/20 bg-moss/[0.07] px-4 py-2">
