@@ -108,6 +108,24 @@ function GoogleButton() {
   const [loading, setLoading] = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  // Google OAuth2 token client + guards. busyRef blocks double-firing the
+  // popup; callbackFiredRef / popupTimeoutRef recover the UI if the popup is
+  // closed without Google ever invoking our callback (e.g. the X button).
+  const tokenClientRef = useRef<any>(null);
+  const busyRef = useRef(false);
+  const callbackFiredRef = useRef(false);
+  const popupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearBusy = useCallback(() => {
+    setLoading(false);
+    setError("");
+    busyRef.current = false;
+    callbackFiredRef.current = false;
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+      popupTimeoutRef.current = null;
+    }
+  }, []);
 
   const handleGoogleCredential = useCallback(
     async (idToken: string) => {
@@ -124,158 +142,113 @@ function GoogleButton() {
         setError(err?.response?.data?.error || "Google sign-in failed.");
       } finally {
         setLoading(false);
+        busyRef.current = false;
       }
     },
     [router]
   );
 
-  // Render the branded GSI button (default popup mode — no redirect_uri config
-  // needed in Google Cloud). On mobile the Google sheet is dismissed via the
-  // browser Back button, which leaves GSI thinking a sign-in flow is still "in
-  // progress", so the button goes dead. To recover we fully reset GSI (drop the
-  // stale global + re-inject the script) when the user returns from a flow:
-  // `focus`/`visibilitychange` (sheet/tab closed, main frame never went hidden)
-  // and `popstate`/`pageshow` (Back/Forward, bfcache restore).
-  //
-  // On a normal page load these recovery events also fire, so we (1) only fully
-  // reset GSI after a flow actually started (tracked via `blur`, since the main
-  // window loses focus when the Google sheet opens), and (2) render the button at
-  // most once per mount/reset. Without the once-guard a needless wipe + re-render
-  // makes the button blink and shifts the layout up/down.
-  //
-  // On mobile, a spurious `blur` can fire during page load (address-bar/script
-  // interaction), which would wrongly arm the recovery reset and re-inject the
-  // script on every reload — causing the blink + up/down jump. To avoid that we
-  // only treat a flow as started AFTER the user has actually clicked the button.
+  // Load Google Identity Services once and build an OAuth2 token client. Using
+  // the OAuth2 popup (instead of One Tap's prompt()) guarantees the Google
+  // account chooser opens for *every* user — One Tap only appears for people
+  // who already have a Google session, so prompt() did nothing for signed-out
+  // users. The token response still carries an `id_token` for our backend.
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
 
-    let flowStarted = false;
-    let userInteracted = false;
-    let forceRender = false;
-
-    const render = () => {
+    const initGsi = () => {
       const g = (window as any).google;
-      if (!g?.accounts?.id || !btnRef.current) return;
-      // If a healthy button is already in the DOM (e.g. restored from bfcache on
-      // a mobile reload) and we're not recovering from a dead flow, leave it
-      // alone — wiping + re-rendering here is what causes the blink on reload.
-      if (!forceRender && btnRef.current.children.length > 0) return;
-      forceRender = false;
-      try {
-        g.accounts.id.cancel();
-      } catch {
-        // no prompt open — ignore
-      }
-      try {
-        btnRef.current.innerHTML = "";
-      } catch {
-        // ignore
-      }
-      g.accounts.id.initialize({
+      if (!g?.accounts?.oauth2) return;
+      tokenClientRef.current = g.accounts.oauth2.initTokenClient({
         client_id: clientId,
+        scope: "openid email profile",
         callback: (response: any) => {
-          if (response?.credential) handleGoogleCredential(response.credential);
+          callbackFiredRef.current = true;
+          if (popupTimeoutRef.current) {
+            clearTimeout(popupTimeoutRef.current);
+            popupTimeoutRef.current = null;
+          }
+          if (response?.error) {
+            // Popup closed or consent denied — a cancellation, not a failure.
+            if (
+              response.error !== "popup_closed_by_user" &&
+              response.error !== "access_denied"
+            ) {
+              setError("Google sign-in was interrupted.");
+            }
+            setLoading(false);
+            busyRef.current = false;
+            return;
+          }
+          if (response?.id_token) handleGoogleCredential(response.id_token);
+          else {
+            setLoading(false);
+            busyRef.current = false;
+          }
         },
-        auto_select: false,
       });
-      g.accounts.id.renderButton(btnRef.current, {
-        theme: "outline",
-        size: "large",
-        width: btnRef.current.clientWidth || 320,
-        type: "standard",
-        text: "continue_with",
-      });
-      // Hide the skeleton via the ref (not React state) so we don't trigger a
-      // re-render that could disturb the GSI-injected iframe and make the
-      // button flicker/jump.
-      if (skeletonRef.current) skeletonRef.current.style.display = "none";
+      setGsiReady(true);
     };
 
-    // Full reset: clear the frozen GSI instance and re-inject a fresh script so the
-    // button is guaranteed to be interactive again after a dismissed/abandoned flow.
-    const resetGsi = () => {
-      forceRender = true;
-      try {
-        (window as any).google = undefined;
-      } catch {
-        // ignore — re-injection redefines it anyway
-      }
-      const existing = document.getElementById("gsi-client-script");
-      if (existing) existing.remove();
+    if ((window as any).google?.accounts?.oauth2) {
+      initGsi();
+      return;
+    }
+
+    const existing = document.getElementById("gsi-client-script");
+    if (!existing) {
       const script = document.createElement("script");
       script.id = "gsi-client-script";
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
-      script.onload = render;
+      script.onload = initGsi;
       script.onerror = () => setError("Failed to load Google sign-in.");
       document.body.appendChild(script);
-    };
+    } else {
+      existing.addEventListener("load", initGsi, { once: true });
+    }
 
-    // A persisted `pageshow` (bfcache restore) also fires on mobile reloads.
-    // Only reset if a real Google flow was started, otherwise leave the restored
-    // button as-is — an unconditional reset here wipes + re-renders the button,
-    // which is the blink/jump seen on mobile reload.
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted && userInteracted) resetGsi();
-    };
-    const onPageHide = () => {
-      try {
-        (window as any).google?.accounts?.id?.cancel();
-      } catch {
-        // ignore
-      }
-    };
-    // Main window loses focus when the Google sheet/popup opens — but only count
-    // it as a flow if the user actually clicked the button first.
-    const onBlur = () => {
-      if (userInteracted) flowStarted = true;
-    };
-    // Only reset if a flow was actually started, so a normal page load
-    // (where focus/visibility also fire) doesn't wipe + re-render the button.
-    const onVisible = () => {
-      if (document.visibilityState === "visible" && flowStarted) resetGsi();
-    };
+    // When the Google popup closes, focus returns to this window. If Google
+    // never fired our callback (common when the popup is closed via X), reset
+    // the stuck "Please wait…" state shortly after focus returns.
     const onFocus = () => {
-      if (flowStarted) {
-        flowStarted = false;
-        resetGsi();
+      if (busyRef.current && !callbackFiredRef.current) {
+        setTimeout(() => {
+          if (busyRef.current && !callbackFiredRef.current) clearBusy();
+        }, 600);
       }
     };
-    const onPopState = () => {
-      if (userInteracted) resetGsi();
-    };
-
-    // Arm the recovery path only after a real click on the Google button.
-    const onClickCapture = () => {
-      userInteracted = true;
-    };
-
-    window.addEventListener("pageshow", onPageShow);
-    window.addEventListener("pagehide", onPageHide);
-    window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
-    window.addEventListener("popstate", onPopState);
-    document.addEventListener("visibilitychange", onVisible);
-    btnRef.current?.addEventListener("click", onClickCapture, true);
-
-    const g = (window as any).google;
-    if (g?.accounts?.id) render();
-    else resetGsi();
 
     return () => {
-      window.removeEventListener("pageshow", onPageShow);
-      window.removeEventListener("pagehide", onPageHide);
-      window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
-      window.removeEventListener("popstate", onPopState);
-      document.removeEventListener("visibilitychange", onVisible);
-      btnRef.current?.removeEventListener("click", onClickCapture, true);
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+        popupTimeoutRef.current = null;
+      }
     };
-  }, [clientId, handleGoogleCredential]);
+  }, [clientId, handleGoogleCredential, clearBusy]);
+
+  const openGoogle = () => {
+    const client = tokenClientRef.current;
+    if (!client) {
+      setError("Google sign-in is not available.");
+      return;
+    }
+    if (busyRef.current) return;
+    busyRef.current = true;
+    callbackFiredRef.current = false;
+    setError("");
+    setLoading(true);
+    // Ultimate fallback: if neither success nor error fires (e.g. popup left
+    // open or closed in a way that bypasses our focus listener), release the
+    // "Please wait…" state after two minutes.
+    popupTimeoutRef.current = setTimeout(() => clearBusy(), 120_000);
+    client.requestAccessToken();
+  };
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
@@ -283,23 +256,30 @@ function GoogleButton() {
 
   return (
     <div>
-      <div className="relative h-[44px] w-full">
-        {/* Skeleton placeholder sits behind the GSI target so the button slot is
-            filled instantly and the real Google button replaces it seamlessly
-            (no blank -> pop). It's a sibling (not inside btnRef) so React never
-            fights GSI for that node's children. */}
-        <div
-          ref={skeletonRef}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-center gap-3 rounded-lg border border-line-2 bg-paper"
-        >
-          <span className="h-4 w-4 rounded-full bg-line-2" />
-          <span className="h-3 w-28 max-w-[55%] rounded bg-line-2" />
-        </div>
-        <div ref={btnRef} className="absolute inset-0 flex items-center justify-center" />
-      </div>
+      <button
+        type="button"
+        onClick={openGoogle}
+        disabled={loading || !gsiReady}
+        className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-line-2 bg-white px-4 transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <GoogleGIcon />
+        <span className="text-sm font-medium text-ink">
+          {loading ? "Please wait…" : "Continue with Google"}
+        </span>
+      </button>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
+  );
+}
+
+function GoogleGIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6.01C43.94 39.05 46.98 34.13 46.98 24.55z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6.01c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
   );
 }
 
