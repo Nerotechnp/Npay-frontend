@@ -39,9 +39,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600&display=optional"
+          rel="preconnect"
+          href="https://accounts.google.com"
+          crossOrigin="anonymous"
         />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Inter:wght@400;500;600&display=optional" />
       </head>
       <body className="font-body antialiased">
         <Providers>{children}</Providers>

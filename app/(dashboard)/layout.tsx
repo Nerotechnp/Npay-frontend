@@ -46,6 +46,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </span>
             <span className="text-sm font-semibold text-ink">Npay</span>
           </Link>
+          {user.is_admin && (
+            <Link
+              href="/admin"
+              aria-label="Admin"
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors md:hidden ${
+                pathname.startsWith("/admin") ? "bg-moss/10 text-moss" : "text-ink-3 hover:bg-paper hover:text-ink"
+              }`}
+            >
+              <ShieldCheck className="h-[1.125rem] w-[1.125rem]" />
+              <span>Admin</span>
+            </Link>
+          )}
           <nav className="hidden items-center gap-1 md:flex">
             {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
@@ -104,17 +116,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           );
         })}
-        {user.is_admin && (
-          <Link
-            href="/admin"
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
-              pathname.startsWith("/admin") ? "text-moss" : "text-ink-3"
-            }`}
-          >
-            <ShieldCheck className="h-5 w-5" />
-            Admin
-          </Link>
-        )}
         <button
           onClick={() => {
             logout();
