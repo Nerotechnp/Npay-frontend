@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutGrid, Receipt, User, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { getAccessToken } from "@/lib/auth";
 
 const navItems = [
   { href: "/dashboard", label: "Services", icon: LayoutGrid },
@@ -18,7 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && !getAccessToken()) {
       router.replace("/login");
     }
   }, [isLoading, user, router]);

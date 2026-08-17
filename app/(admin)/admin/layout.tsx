@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutGrid, Users, Package, Receipt, Network, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { getAccessToken } from "@/lib/auth";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutGrid },
@@ -20,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!user || !user.is_admin)) {
+    if (!isLoading && (!user || !user.is_admin) && !getAccessToken()) {
       router.replace("/dashboard");
     }
   }, [isLoading, user, router]);

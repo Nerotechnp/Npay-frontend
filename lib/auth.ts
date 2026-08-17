@@ -17,7 +17,7 @@ export function setTokens(accessToken: string, refreshToken?: string) {
 
   // Also set a short-lived cookie so the Next.js middleware can check
   // whether a session exists (middleware runs on the edge, no localStorage there).
-  document.cookie = `token=${accessToken}; path=/; max-age=${60 * 60 * 24}`;
+  document.cookie = `token=${encodeURIComponent(accessToken)}; path=/; SameSite=Lax; max-age=${60 * 60 * 24}`;
 }
 
 export function clearTokens() {
