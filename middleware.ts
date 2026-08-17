@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/services", "/transactions", "/profile", "/admin"];
-
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token");
-  const path = request.nextUrl.pathname;
-
-  const isProtected = PROTECTED_PREFIXES.some((p) => path.startsWith(p));
-
-  if (isProtected && !token) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
+// Auth is enforced client-side by the dashboard/admin layout guards, which
+// read the token from localStorage. That is reliable across devices — including
+// mobile browsers where a JS-set cookie may not be forwarded to the edge
+// middleware. We intentionally do NOT redirect here, to avoid a middleware
+// <-> login-page redirect loop on clients that don't send the cookie.
+export function middleware(_request: NextRequest) {
   return NextResponse.next();
 }
 
