@@ -56,19 +56,33 @@ export default function AdminTransactionsPage() {
       render: (tx) => <span className="text-ink-2/70">{formatMoney(tx.amount_charged, tx.currency)}</span>,
     },
     {
-      key: "gateway",
-      header: "Gateway",
+      key: "payment",
+      header: "Payment Gateway",
+      mobile: "hide",
+      render: (tx) =>
+        tx.gateway_reference ? (
+          <div className="min-w-0">
+            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+              CyberSource
+            </span>
+            <p className="mt-1 truncate font-mono text-xs text-ink-3">{tx.gateway_reference}</p>
+          </div>
+        ) : (
+          <span className="text-ink-3">—</span>
+        ),
+    },
+    {
+      key: "provider",
+      header: "Delivery Provider",
       mobile: "hide",
       render: (tx) => <span className="text-ink-3">{gatewayName(tx.provider_reference)}</span>,
     },
     {
       key: "ref",
-      header: "Reference",
+      header: "Provider Ref",
       mobile: "hide",
       render: (tx) => (
-        <span className="font-mono text-xs text-ink-3">
-          {tx.provider_reference || tx.gateway_reference || "—"}
-        </span>
+        <span className="font-mono text-xs text-ink-3">{tx.provider_reference || "—"}</span>
       ),
     },
     {
