@@ -25,9 +25,23 @@ export interface Product {
   updated_at?: string;
 }
 
+// ForexRate is a single Nepal Rastra Bank quote for one currency, normalized to
+// NPR per 1 unit (NRB quotes INR per 100 and JPY per 10, so the raw buy/sell
+// are divided by the unit).
+export interface ForexRate {
+  name: string;
+  unit: number;
+  buy_per_unit: number;
+  sell_per_unit: number;
+}
+
 export interface AppConfig {
-  exchange_rate_usd_to_npr: number;
+  // exchange_rate_source is "nrb" when served from the live Nepal Rastra Bank
+  // feed, or "unavailable" when the live feed could not be reached.
+  exchange_rate_source: "nrb" | "unavailable" | string;
+  exchange_rate_date: string | null;
   supported_currencies: string[];
+  exchange_rates: Record<string, ForexRate>;
 }
 
 export type TransactionStatus =

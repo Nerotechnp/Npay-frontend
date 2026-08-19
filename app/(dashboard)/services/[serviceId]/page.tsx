@@ -6,10 +6,12 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useService } from "@/hooks/useServices";
 import { useConfig } from "@/hooks/useConfig";
+import { computeAmountCharged, rateForCurrency } from "@/lib/exchangeRate";
 import { useCreateTransaction, useInitiatePayment } from "@/hooks/useTransactions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { LiveRateBadge } from "@/components/LiveRateBadge";
 
 export default function ServicePaymentPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -26,10 +28,9 @@ export default function ServicePaymentPage() {
   const createTransaction = useCreateTransaction();
   const initiatePayment = useInitiatePayment();
 
-  const exchangeRate = config?.exchange_rate_usd_to_npr || 0;
+  const rate = rateForCurrency(config, currency);
   const currencies = config?.supported_currencies || ["USD"];
-  const amountCharged =
-    exchangeRate > 0 && amountNpr ? (Number(amountNpr) / exchangeRate).toFixed(2) : "0.00";
+  const amountCharged = computeAmountCharged(amountNpr, rate);
   const loading = createTransaction.isPending || initiatePayment.isPending;
 
   function handleContinue(e: React.FormEvent) {
@@ -151,7 +152,10 @@ export default function ServicePaymentPage() {
             </div>
             <div className="flex justify-between text-xs text-ink-3/70">
               <dt>Rate</dt>
-              <dd>1 {currency} ≈ {exchangeRate > 0 ? exchangeRate : "—"} NPR (est.)</dd>
+              <dd className="flex items-center gap-2">
+                1 {currency} ≈ {rate > 0 ? rate : "—"} NPR
+                <LiveRateBadge config={config} />
+              </dd>
             </div>
           </dl>
 

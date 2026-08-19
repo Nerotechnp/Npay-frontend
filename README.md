@@ -66,8 +66,8 @@ Open http://localhost:3000 — it redirects to `/login`.
 | Service list, payment form, transaction creation, payment initiation | Fully wired to the backend |
 | Transaction status polling | Polls every 3s while `pending`/`processing`, matching the backend's webhook-driven flow |
 | **Google Sign-In** | UI button exists but is **not wired to Google Identity Services** — it's a placeholder `alert()`. Load `https://accounts.google.com/gsi/client`, get a real `id_token` from a Google credential response, and pass it to the same `handleGoogleCredential` function already written |
-| **Exchange rate** | Hardcoded `NPR_PER_USD = 133.5` in the service payment form. Replace with a live rate from your backend (which should itself follow NRB's published rate, per the backend's compliance notes) |
-| Multi-currency rates for AUD/GBP/CAD/EUR | Currency selector exists but all use the same hardcoded USD rate — needs a real per-currency rate source |
+| **Exchange rate** | Sourced live from the backend's `/api/v1/config`, which now pulls the official Nepal Rastra Bank rate (with a static fallback). The payment review shows a "Live · NRB" badge with the publication date. |
+| Multi-currency rates for AUD/GBP/CAD/EUR | Currency selector exists; the backend charges via its authoritative USD rate, and the live per-currency NRB rates are available in `/api/v1/config` (`exchange_rates`) for display. |
 
 ## Admin panel
 
@@ -88,5 +88,5 @@ response (`is_admin`), matching the backend's `AdminOnly` middleware.
 
 1. `npm install && npm run build` — first real compile check
 2. Wire Google Identity Services into `app/(auth)/login/page.tsx`
-3. Replace the hardcoded exchange rate with a backend-provided rate endpoint
+3. Exchange rate is now wired to the backend's live NRB feed (no action needed)
 4. Point `NEXT_PUBLIC_API_URL` at your deployed backend and test the full loop end to end
