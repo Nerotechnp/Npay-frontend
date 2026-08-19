@@ -21,7 +21,7 @@ export function StatCard({
     purple: "bg-purple-50 text-purple-600",
   };
   return (
-    <div className="rounded-2xl border border-line bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-moss/30 hover:shadow-md">
+    <div className="rounded-2xl border border-line bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-moss/30 hover:shadow-md">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wider text-ink-3">{label}</p>
         <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${tiles[tone]}`}>
@@ -29,7 +29,7 @@ export function StatCard({
         </div>
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-semibold tabular-nums text-ink">{value}</p>
+        <p className="text-xl font-semibold tabular-nums text-ink">{value}</p>
         {sub && <p className="mt-1 text-xs text-ink-3">{sub}</p>}
       </div>
     </div>

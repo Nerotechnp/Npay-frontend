@@ -3,6 +3,7 @@
 import { Users, Receipt, CheckCircle2, Clock, XCircle, Wallet } from "lucide-react";
 import { useAdminStats } from "@/hooks/admin/useAdminStats";
 import { StatCard } from "@/components/ui/StatCard";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { formatMoney } from "@/lib/format";
 
 export default function AdminOverviewPage() {
@@ -10,13 +11,11 @@ export default function AdminOverviewPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold text-moss">
-          Admin
-        </span>
-        <h1 className="mt-3 font-display text-3xl text-ink">Overview</h1>
-        <p className="mt-1.5 text-sm text-ink-3">A snapshot of Npay right now.</p>
-      </div>
+      <PageHeader
+        title="Overview"
+        subtitle="A snapshot of Npay right now."
+        badge="Admin"
+      />
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">

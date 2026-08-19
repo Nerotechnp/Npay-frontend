@@ -44,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen flex-col bg-paper lg:flex-row">
       {/* Desktop sidebar — the only navigation on large screens */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line-2 bg-white lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-line-2 bg-white lg:sticky lg:top-0 lg:h-screen lg:flex">
         <div className="flex h-16 items-center gap-2 border-b border-line-2 px-6">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-moss text-sm font-extrabold tracking-tight text-white">
             N
@@ -59,8 +59,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               href={href}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                 isActive(href)
-                  ? "bg-moss/10 text-moss"
-                  : "text-ink-3 hover:bg-paper hover:text-ink"
+                  ? "bg-moss text-white shadow-sm shadow-moss/20"
+                  : "text-ink-2 hover:bg-paper hover:text-ink"
               }`}
             >
               <Icon className="h-[1.125rem] w-[1.125rem]" />

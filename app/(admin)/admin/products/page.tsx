@@ -9,9 +9,10 @@ import {
   useDeleteAdminProduct,
 } from "@/hooks/admin/useAdminProducts";
 import { useAdminGateways } from "@/hooks/admin/useAdminGateways";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/admin/PageHeader";
+import { DataTable, type Column } from "@/components/admin/DataTable";
 import { ProductFormModal } from "@/components/admin/ProductFormModal";
 import type { Product } from "@/types";
 
@@ -24,107 +25,120 @@ export default function AdminProductsPage() {
 
   const [editing, setEditing] = useState<Product | null | undefined>(undefined);
 
+  const rows = products ?? [];
+  const gatewayName = (id: string | null) =>
+    (id && gateways?.find((g) => g.id === id)?.name) || "—";
+
+  const columns: Column<Product>[] = [
+    {
+      key: "name",
+      header: "Product",
+      mobile: "primary",
+      render: (p) => (
+        <div className="min-w-0">
+          <p className="truncate font-medium text-ink">{p.name}</p>
+          <p className="truncate text-xs capitalize text-ink-3">{p.category}</p>
+        </div>
+      ),
+    },
+    {
+      key: "code",
+      header: "Code",
+      mobile: "hide",
+      render: (p) =>
+        p.product_code ? (
+          <span className="rounded bg-ink/[0.06] px-2 py-1 font-mono text-xs text-ink-2">{p.product_code}</span>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "gateway",
+      header: "Gateway",
+      mobile: "hide",
+      render: (p) => <span className="text-ink-3">{gatewayName(p.gateway_id)}</span>,
+    },
+    {
+      key: "limits",
+      header: "Min / Max",
+      mobile: "hide",
+      render: (p) => (
+        <span className="text-ink-3">
+          {p.min_amount > 0 ? p.min_amount : "0"} / {p.max_amount > 0 ? p.max_amount : "∞"}
+        </span>
+      ),
+    },
+    {
+      key: "fees",
+      header: "Fees",
+      mobile: "hide",
+      render: (p) =>
+        p.service_charge > 0 || p.bank_processing_fee > 0 ? (
+          <span className="text-ink-3">
+            {p.service_charge || 0}% / {p.bank_processing_fee || 0}%
+          </span>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (p) =>
+        p.is_active ? <Badge tone="success">Active</Badge> : <Badge tone="neutral">Hidden</Badge>,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (p) => (
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setEditing(p)}>
+            Edit
+          </Button>
+          <Button
+            variant="secondary"
+            className="px-3 py-1.5 text-xs"
+            onClick={() => updateProduct.mutate({ id: p.id, is_active: !p.is_active })}
+          >
+            {p.is_active ? "Hide" : "Show"}
+          </Button>
+          <Button
+            variant="ghost"
+            className="px-3 py-1.5 text-xs text-danger hover:bg-red-50"
+            onClick={() => {
+              if (confirm(`Delete "${p.name}"? This can't be undone.`)) {
+                deleteProduct.mutate(p.id);
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl text-ink">Products</h1>
-          <p className="mt-1 text-sm text-ink-3">
-            Bill-payment products users can pick — NTC, Ncell, NEA, and more. Manage gateway, limits, and visibility here.
-          </p>
-        </div>
-        <Button onClick={() => setEditing(null)} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          New product
-        </Button>
-      </div>
+      <PageHeader
+        title="Products"
+        subtitle="Bill-payment products users can pick — NTC, Ncell, NEA, and more."
+        actions={
+          <Button onClick={() => setEditing(null)} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4" />
+            New product
+          </Button>
+        }
+      />
 
-      <Card className="mt-6 overflow-x-auto rounded-2xl p-0">
-        <table className="admin-table w-full text-left text-sm">
-          <thead className="border-b border-line text-xs text-ink-3">
-            <tr>
-              <th className="bg-paper px-5 py-3 font-medium">Product</th>
-              <th className="bg-paper px-5 py-3 font-medium">Category</th>
-              <th className="bg-paper px-5 py-3 font-medium">Product code</th>
-              <th className="bg-paper px-5 py-3 font-medium">Gateway</th>
-              <th className="bg-paper px-5 py-3 font-medium">Min / Max (NPR)</th>
-              <th className="bg-paper px-5 py-3 font-medium">Fees (%)</th>
-              <th className="bg-paper px-5 py-3 font-medium">Status</th>
-              <th className="bg-paper px-5 py-3 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
-                  Loading…
-                </td>
-              </tr>
-            )}
-            {products?.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
-                  No products yet. Add your first one.
-                </td>
-              </tr>
-            )}
-            {products?.map((p) => (
-              <tr key={p.id} className="border-b border-line last:border-0">
-                <td className="px-5 py-3 font-medium text-ink">{p.name}</td>
-                <td className="px-5 py-3 capitalize text-ink-3">{p.category}</td>
-                <td className="px-5 py-3">
-                  {p.product_code ? (
-                    <span className="rounded bg-ink/[0.06] px-2 py-1 font-mono text-xs text-ink-2">
-                      {p.product_code}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-5 py-3 text-ink-3">
-                  {gateways?.find((g) => g.id === p.gateway_id)?.name || "—"}
-                </td>
-                <td className="px-5 py-3 text-ink-3">
-                  {p.min_amount > 0 ? p.min_amount : "0"} / {p.max_amount > 0 ? p.max_amount : "∞"}
-                </td>
-                <td className="px-5 py-3 text-ink-3">
-                  {p.service_charge > 0 || p.bank_processing_fee > 0
-                    ? `${p.service_charge || 0}% / ${p.bank_processing_fee || 0}%`
-                    : "—"}
-                </td>
-                <td className="px-5 py-3">
-                  {p.is_active ? <Badge tone="success">Active</Badge> : <Badge tone="neutral">Hidden</Badge>}
-                </td>
-                <td className="px-5 py-3">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={() => setEditing(p)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="px-3 py-1.5 text-xs"
-                      onClick={() => updateProduct.mutate({ id: p.id, is_active: !p.is_active })}
-                    >
-                      {p.is_active ? "Hide" : "Show"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="px-3 py-1.5 text-xs text-danger hover:bg-red-50"
-                      onClick={() => {
-                        if (confirm(`Delete "${p.name}"? This can't be undone.`)) {
-                          deleteProduct.mutate(p.id);
-                        }
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={rows}
+        rowKey={(p) => p.id}
+        isLoading={isLoading}
+        emptyMessage="No products yet. Add your first one."
+      />
 
       {editing !== undefined && (
         <ProductFormModal
