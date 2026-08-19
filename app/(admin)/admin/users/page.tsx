@@ -23,6 +23,12 @@ export default function AdminUsersPage() {
 
   const columns: Column<User>[] = [
     {
+      key: "id",
+      header: "User ID",
+      mobile: "hide",
+      render: (u) => <span className="font-mono text-xs text-ink-3">{u.id}</span>,
+    },
+    {
       key: "identity",
       header: "User",
       mobile: "primary",
@@ -34,10 +40,10 @@ export default function AdminUsersPage() {
       ),
     },
     {
-      key: "joined",
-      header: "Joined",
+      key: "country",
+      header: "Country",
       mobile: "hide",
-      render: (u) => <span className="text-ink-3">{formatDate(u.created_at)}</span>,
+      render: (u) => <span className="text-ink-3">{u.country || "—"}</span>,
     },
     {
       key: "status",
@@ -60,10 +66,10 @@ export default function AdminUsersPage() {
       render: (u) => {
         const isSelf = u.id === me?.id;
         return (
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap">
             <Button
               variant="secondary"
-              className="px-3 py-1.5 text-xs"
+              className="px-2.5 py-1 text-[11px]"
               disabled={isSelf || updateUser.isPending}
               onClick={() => updateUser.mutate({ id: u.id, is_blocked: !u.is_blocked })}
             >
@@ -71,7 +77,7 @@ export default function AdminUsersPage() {
             </Button>
             <Button
               variant="secondary"
-              className="px-3 py-1.5 text-xs"
+              className="px-2.5 py-1 text-[11px]"
               disabled={isSelf || updateUser.isPending}
               onClick={() => updateUser.mutate({ id: u.id, is_admin: !u.is_admin })}
             >
@@ -80,6 +86,22 @@ export default function AdminUsersPage() {
           </div>
         );
       },
+    },
+    {
+      key: "last_active",
+      header: "Last active",
+      mobile: "hide",
+      render: (u) => (
+        <span className="text-ink-3">
+          {u.last_active ? formatDate(u.last_active) : "Never"}
+        </span>
+      ),
+    },
+    {
+      key: "joined",
+      header: "Joined",
+      mobile: "hide",
+      render: (u) => <span className="text-ink-3">{formatDate(u.created_at)}</span>,
     },
   ];
 

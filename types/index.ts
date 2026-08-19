@@ -6,6 +6,7 @@ export interface User {
   is_verified: boolean;
   is_admin: boolean;
   is_blocked: boolean;
+  last_active: string | null;
   created_at: string;
 }
 
