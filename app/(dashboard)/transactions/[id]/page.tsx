@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowLeft, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { useTransaction } from "@/hooks/useTransactions";
 import { Card } from "@/components/ui/Card";
@@ -38,8 +39,28 @@ export default function TransactionDetailPage() {
 
         <div className="mt-4 w-full divide-y divide-line rounded-md border border-line text-left text-sm">
           <Row label="Recipient" value={tx.recipient_number} />
+          <Row
+            label="Amount (principal)"
+            value={
+              <span>
+                {formatMoney(tx.amount_npr, "NPR")}
+                <span className="block text-xs font-normal text-ink-3">
+                  {tx.exchange_rate > 0
+                    ? (tx.amount_npr / tx.exchange_rate).toFixed(2)
+                    : "0.00"}{" "}
+                  {tx.currency}
+                </span>
+              </span>
+            }
+          />
+          {tx.service_charge > 0 && (
+            <Row label="Service charge" value={formatMoney(tx.service_charge, tx.currency)} />
+          )}
+          {tx.bank_processing_fee > 0 && (
+            <Row label="Bank processing fee" value={formatMoney(tx.bank_processing_fee, tx.currency)} />
+          )}
           <Row label="Amount charged" value={formatMoney(tx.amount_charged, tx.currency)} />
-          <Row label="Amount in NPR" value={formatMoney(tx.amount_npr, "NPR")} />
+          <Row label="Rate" value={`1 ${tx.currency} ≈ ${tx.exchange_rate} NPR`} />
           <Row label="Date" value={formatDate(tx.created_at)} />
           {tx.provider_reference && (
             <Row label="Reference" value={tx.provider_reference} />
@@ -56,11 +77,11 @@ function StatusIcon({ status }: { status: string }) {
   return <Clock className="h-10 w-10 animate-pulse text-saffron" />;
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex justify-between px-4 py-2.5">
       <span className="text-ink-3">{label}</span>
-      <span className="font-medium text-ink">{value}</span>
+      <span className="text-right font-medium text-ink">{value}</span>
     </div>
   );
 }

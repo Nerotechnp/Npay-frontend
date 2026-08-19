@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import type { Product, Gateway } from "@/types";
 import type { ProductInput } from "@/hooks/admin/useAdminProducts";
 
+const percentInput = (value: number) => (value ? String(value) : "");
+
 interface ProductFormModalProps {
   product?: Product | null;
   gateways: Gateway[];
@@ -23,6 +25,8 @@ export function ProductFormModal({ product, gateways, onClose, onSubmit }: Produ
   const [phonePrefixes, setPhonePrefixes] = useState(product?.phone_prefixes || "");
   const [minAmount, setMinAmount] = useState(product?.min_amount ?? 0);
   const [maxAmount, setMaxAmount] = useState(product?.max_amount ?? 0);
+  const [serviceCharge, setServiceCharge] = useState(product?.service_charge ?? 0);
+  const [bankProcessingFee, setBankProcessingFee] = useState(product?.bank_processing_fee ?? 0);
   const [iconUrl, setIconUrl] = useState(product?.icon_url || "");
   const [displayOrder, setDisplayOrder] = useState(product?.display_order ?? 0);
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
@@ -42,6 +46,8 @@ export function ProductFormModal({ product, gateways, onClose, onSubmit }: Produ
         phone_prefixes: phonePrefixes,
         min_amount: minAmount,
         max_amount: maxAmount,
+        service_charge: serviceCharge,
+        bank_processing_fee: bankProcessingFee,
         display_order: displayOrder,
         icon_url: iconUrl,
         is_active: isActive,
@@ -110,6 +116,27 @@ export function ProductFormModal({ product, gateways, onClose, onSubmit }: Produ
             value={maxAmount}
             onChange={(e) => setMaxAmount(parseFloat(e.target.value) || 0)}
             placeholder="0 = no limit"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Service charge (%)"
+            type="number"
+            min={0}
+            step="0.01"
+            value={percentInput(serviceCharge)}
+            onChange={(e) => setServiceCharge(parseFloat(e.target.value) || 0)}
+            placeholder="e.g. 1.5"
+          />
+          <Input
+            label="Bank processing fee (%)"
+            type="number"
+            min={0}
+            step="0.01"
+            value={percentInput(bankProcessingFee)}
+            onChange={(e) => setBankProcessingFee(parseFloat(e.target.value) || 0)}
+            placeholder="e.g. 2"
           />
         </div>
 

@@ -6,12 +6,13 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useService } from "@/hooks/useServices";
 import { useConfig } from "@/hooks/useConfig";
-import { computeAmountCharged, rateForCurrency } from "@/lib/exchangeRate";
+import { rateForCurrency } from "@/lib/exchangeRate";
 import { useCreateTransaction, useInitiatePayment } from "@/hooks/useTransactions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { LiveRateBadge } from "@/components/LiveRateBadge";
+import { computeFeesInCurrency } from "@/lib/fees";
 
 export default function ServicePaymentPage() {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -30,7 +31,8 @@ export default function ServicePaymentPage() {
 
   const rate = rateForCurrency(config, currency);
   const currencies = config?.supported_currencies || ["USD"];
-  const amountCharged = computeAmountCharged(amountNpr, rate);
+  const { service, bank, total } = computeFeesInCurrency(Number(amountNpr), rate, product);
+  const amountCharged = total.toFixed(2);
   const loading = createTransaction.isPending || initiatePayment.isPending;
 
   function handleContinue(e: React.FormEvent) {
@@ -144,8 +146,25 @@ export default function ServicePaymentPage() {
             </div>
             <div className="flex justify-between">
               <dt className="text-ink-3">Amount</dt>
-              <dd className="font-medium text-ink">{Number(amountNpr).toLocaleString()} NPR</dd>
+              <dd className="text-right font-medium text-ink">
+                {Number(amountNpr).toLocaleString()} NPR
+                <span className="block text-xs font-normal text-ink-3">
+                  {rate > 0 ? (Number(amountNpr) / rate).toFixed(2) : "0.00"} {currency}
+                </span>
+              </dd>
             </div>
+            {service > 0 || bank > 0 ? (
+              <>
+                <div className="flex justify-between text-xs text-ink-3/70">
+                  <dt>Service charge ({product?.service_charge ?? 0}%)</dt>
+                  <dd>{service.toFixed(2)} {currency}</dd>
+                </div>
+                <div className="flex justify-between text-xs text-ink-3/70">
+                  <dt>Bank processing fee ({product?.bank_processing_fee ?? 0}%)</dt>
+                  <dd>{bank.toFixed(2)} {currency}</dd>
+                </div>
+              </>
+            ) : null}
             <div className="flex justify-between">
               <dt className="text-ink-3">You&apos;ll be charged</dt>
               <dd className="font-medium text-ink">{currency} {amountCharged}</dd>

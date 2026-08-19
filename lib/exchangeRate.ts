@@ -1,4 +1,5 @@
 import type { AppConfig } from "@/types";
+import { round2 } from "@/lib/fees";
 
 // computeAmountCharged previews the foreign-currency amount the user will be
 // charged, using the backend's authoritative live rate for the selected
@@ -8,7 +9,7 @@ import type { AppConfig } from "@/types";
 export function computeAmountCharged(amountNpr: string | number, rate: number): string {
   const npr = typeof amountNpr === "string" ? Number(amountNpr) : amountNpr;
   if (!rate || !npr || npr <= 0) return "0.00";
-  return (npr / rate).toFixed(2);
+  return round2(npr / rate).toFixed(2);
 }
 
 // rateForCurrency returns the live NPR-per-unit rate for a currency from the

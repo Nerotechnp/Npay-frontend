@@ -18,6 +18,11 @@ export interface Product {
   phone_prefixes: string;
   min_amount: number;
   max_amount: number;
+  // service_charge and bank_processing_fee are percentages of the NPR amount
+  // charged per transaction for this product (e.g. 1.5 = 1.5%). Added on top of
+  // the amount the user pays.
+  service_charge: number;
+  bank_processing_fee: number;
   is_active: boolean;
   display_order: number;
   icon_url: string;
@@ -58,6 +63,11 @@ export interface Transaction {
   recipient_number: string;
   amount_npr: number;
   amount_charged: number;
+  // service_charge and bank_processing_fee are the fee amounts (in `currency`,
+  // i.e. the currency the user paid in) derived from the product's percentage
+  // fees and added to the principal to get the total charged.
+  service_charge: number;
+  bank_processing_fee: number;
   currency: string;
   exchange_rate: number;
   status: TransactionStatus;

@@ -48,6 +48,7 @@ export default function AdminProductsPage() {
               <th className="bg-paper px-5 py-3 font-medium">Product code</th>
               <th className="bg-paper px-5 py-3 font-medium">Gateway</th>
               <th className="bg-paper px-5 py-3 font-medium">Min / Max (NPR)</th>
+              <th className="bg-paper px-5 py-3 font-medium">Fees (%)</th>
               <th className="bg-paper px-5 py-3 font-medium">Status</th>
               <th className="bg-paper px-5 py-3 font-medium text-right">Actions</th>
             </tr>
@@ -55,14 +56,14 @@ export default function AdminProductsPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-ink-3">
+                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
                   Loading…
                 </td>
               </tr>
             )}
             {products?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-ink-3">
+                <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
                   No products yet. Add your first one.
                 </td>
               </tr>
@@ -85,6 +86,11 @@ export default function AdminProductsPage() {
                 </td>
                 <td className="px-5 py-3 text-ink-3">
                   {p.min_amount > 0 ? p.min_amount : "0"} / {p.max_amount > 0 ? p.max_amount : "∞"}
+                </td>
+                <td className="px-5 py-3 text-ink-3">
+                  {p.service_charge > 0 || p.bank_processing_fee > 0
+                    ? `${p.service_charge || 0}% / ${p.bank_processing_fee || 0}%`
+                    : "—"}
                 </td>
                 <td className="px-5 py-3">
                   {p.is_active ? <Badge tone="success">Active</Badge> : <Badge tone="neutral">Hidden</Badge>}

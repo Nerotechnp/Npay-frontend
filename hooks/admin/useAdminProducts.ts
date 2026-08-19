@@ -22,6 +22,8 @@ export interface ProductInput {
   phone_prefixes?: string;
   min_amount?: number;
   max_amount?: number;
+  service_charge?: number;
+  bank_processing_fee?: number;
   display_order?: number;
   icon_url?: string;
   is_active?: boolean;
