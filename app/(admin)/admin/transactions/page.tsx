@@ -50,6 +50,12 @@ export default function AdminTransactionsPage() {
       ),
     },
     {
+      key: "id",
+      header: "Transaction ID",
+      mobile: "field",
+      render: (tx) => <span className="font-mono text-xs text-ink-3">{tx.id}</span>,
+    },
+    {
       key: "amount",
       header: "Amount",
       mobile: "hide",
@@ -75,15 +81,17 @@ export default function AdminTransactionsPage() {
       key: "provider",
       header: "Delivery Provider",
       mobile: "hide",
-      render: (tx) => <span className="text-ink-3">{gatewayName(tx.provider_reference)}</span>,
-    },
-    {
-      key: "ref",
-      header: "Provider Ref",
-      mobile: "hide",
-      render: (tx) => (
-        <span className="font-mono text-xs text-ink-3">{tx.provider_reference || "—"}</span>
-      ),
+      render: (tx) =>
+        tx.provider_reference ? (
+          <div className="min-w-0">
+            <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              {gatewayName(tx.provider_reference)}
+            </span>
+            <p className="mt-1 truncate font-mono text-xs text-ink-3">{tx.provider_reference}</p>
+          </div>
+        ) : (
+          <span className="text-ink-3">—</span>
+        ),
     },
     {
       key: "response",
