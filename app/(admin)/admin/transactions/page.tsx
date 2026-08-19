@@ -4,12 +4,13 @@ import { useState } from "react";
 import {
   useAdminTransactions,
   useUpdateAdminTransactionStatus,
+  useRetryAdminDelivery,
 } from "@/hooks/admin/useAdminTransactions";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { DataTable, type Column } from "@/components/admin/DataTable";
-import { formatDate, formatMoney, statusLabel, statusTone } from "@/lib/format";
+import { formatDate, formatMoney, statusLabel, statusTone, deliveryStatusLabel, deliveryStatusTone } from "@/lib/format";
 import type { Transaction, TransactionStatus } from "@/types";
 
 const STATUS_OPTIONS: TransactionStatus[] = ["pending", "processing", "success", "failed", "refunded"];
@@ -34,6 +35,7 @@ export default function AdminTransactionsPage() {
   const [offset, setOffset] = useState(0);
   const { data, isLoading } = useAdminTransactions(status, offset);
   const updateStatus = useUpdateAdminTransactionStatus();
+  const retryDelivery = useRetryAdminDelivery();
 
   const rows = data?.transactions ?? [];
 
@@ -102,8 +104,19 @@ export default function AdminTransactionsPage() {
       ),
     },
     {
+      key: "delivery",
+      header: "Delivery",
+      render: (tx) => (
+        <span
+          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${deliveryStatusTone(tx.delivery_status)}`}
+        >
+          {deliveryStatusLabel(tx.delivery_status)}
+        </span>
+      ),
+    },
+    {
       key: "status",
-      header: "Status",
+      header: "Payment",
       render: (tx) => (
         <span
           className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}
@@ -117,23 +130,39 @@ export default function AdminTransactionsPage() {
       header: "Override",
       align: "right",
       render: (tx) => (
-        <select
-          className="w-full rounded-lg border border-line-2 bg-paper px-2 py-1.5 text-xs text-ink focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss sm:w-auto"
-          value={tx.status}
-          disabled={updateStatus.isPending}
-          onChange={(e) => {
-            const next = e.target.value as TransactionStatus;
-            if (next !== tx.status && confirm(`Change status to "${statusLabel(next)}"?`)) {
-              updateStatus.mutate({ id: tx.id, status: next });
-            }
-          }}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {statusLabel(s)}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-col items-end gap-1.5">
+          {tx.status === "success" && tx.delivery_status === "failed" && (
+            <button
+              type="button"
+              className="rounded-lg bg-moss px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-moss/90 disabled:opacity-50"
+              disabled={retryDelivery.isPending}
+              onClick={() => {
+                if (confirm("Retry delivery to the provider?")) {
+                  retryDelivery.mutate(tx.id);
+                }
+              }}
+            >
+              {retryDelivery.isPending ? "Retrying…" : "Retry delivery"}
+            </button>
+          )}
+          <select
+            className="w-full rounded-lg border border-line-2 bg-paper px-2 py-1.5 text-xs text-ink focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss sm:w-auto"
+            value={tx.status}
+            disabled={updateStatus.isPending}
+            onChange={(e) => {
+              const next = e.target.value as TransactionStatus;
+              if (next !== tx.status && confirm(`Change status to "${statusLabel(next)}"?`)) {
+                updateStatus.mutate({ id: tx.id, status: next });
+              }
+            }}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {statusLabel(s)}
+              </option>
+            ))}
+          </select>
+        </div>
       ),
     },
   ];

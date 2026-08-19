@@ -57,6 +57,11 @@ export type TransactionStatus =
   | "failed"
   | "refunded";
 
+// DeliveryStatus tracks fulfillment to the end provider (Khalti/eSewa/IME)
+// independently of the payment status. A transaction can be paid (status =
+// success) yet still undelivered if the delivery provider rejects it.
+export type DeliveryStatus = "pending" | "delivered" | "failed";
+
 export interface Transaction {
   id: string;
   user_id: string;
@@ -72,6 +77,7 @@ export interface Transaction {
   currency: string;
   exchange_rate: number;
   status: TransactionStatus;
+  delivery_status: DeliveryStatus;
   gateway_reference: string;
   provider_reference: string;
   receipt_message: string;

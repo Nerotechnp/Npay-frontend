@@ -29,9 +29,9 @@ export function statusLabel(status: Transaction["status"]): string {
     case "processing":
       return "Processing";
     case "success":
-      return "Delivered";
+      return "Paid";
     case "failed":
-      return "Failed";
+      return "Payment failed";
     case "refunded":
       return "Refunded";
     default:
@@ -50,5 +50,29 @@ export function statusTone(status: Transaction["status"]): string {
       return "bg-amber-50 text-amber-700 border border-amber-100";
     default:
       return "bg-ink/5 text-ink/60";
+  }
+}
+
+export function deliveryStatusLabel(status: Transaction["delivery_status"]): string {
+  switch (status) {
+    case "delivered":
+      return "Delivered";
+    case "failed":
+      return "Delivery failed";
+    case "pending":
+    default:
+      return "Pending";
+  }
+}
+
+export function deliveryStatusTone(status: Transaction["delivery_status"]): string {
+  switch (status) {
+    case "delivered":
+      return "bg-green-50 text-green-700 border border-green-100";
+    case "failed":
+      return "bg-red-50 text-red-700 border border-red-100";
+    case "pending":
+    default:
+      return "bg-amber-50 text-amber-700 border border-amber-100";
   }
 }
