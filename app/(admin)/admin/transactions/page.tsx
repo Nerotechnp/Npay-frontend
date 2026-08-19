@@ -41,6 +41,12 @@ export default function AdminTransactionsPage() {
 
   const columns: Column<Transaction>[] = [
     {
+      key: "id",
+      header: "Transaction ID",
+      mobile: "field",
+      render: (tx) => <span className="font-mono text-xs text-ink-3">{tx.id}</span>,
+    },
+    {
       key: "recipient",
       header: "Recipient",
       mobile: "primary",
@@ -50,12 +56,6 @@ export default function AdminTransactionsPage() {
           <p className="truncate text-xs text-ink-3">{formatDate(tx.created_at)}</p>
         </div>
       ),
-    },
-    {
-      key: "id",
-      header: "Transaction ID",
-      mobile: "field",
-      render: (tx) => <span className="font-mono text-xs text-ink-3">{tx.id}</span>,
     },
     {
       key: "amount",
@@ -78,6 +78,17 @@ export default function AdminTransactionsPage() {
         ) : (
           <span className="text-ink-3">—</span>
         ),
+    },
+    {
+      key: "status",
+      header: "Payment",
+      render: (tx) => (
+        <span
+          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}
+        >
+          {statusLabel(tx.status)}
+        </span>
+      ),
     },
     {
       key: "provider",
@@ -111,17 +122,6 @@ export default function AdminTransactionsPage() {
           className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${deliveryStatusTone(tx.delivery_status)}`}
         >
           {deliveryStatusLabel(tx.delivery_status)}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: "Payment",
-      render: (tx) => (
-        <span
-          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}
-        >
-          {statusLabel(tx.status)}
         </span>
       ),
     },
