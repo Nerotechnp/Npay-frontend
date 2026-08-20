@@ -38,8 +38,8 @@ export function Hero() {
         className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]"
       />
 
-      <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-5 sm:pb-20 sm:pt-20 lg:pt-24">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-10">
+      <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-12 sm:px-5 sm:pb-20 sm:pt-20 lg:pt-24">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-10">
           <div className="text-center lg:text-left">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-moss/20 bg-moss/[0.07] px-4 py-2">
               <Plane className="h-3.5 w-3.5 text-moss" />
@@ -48,7 +48,7 @@ export function Hero() {
               </span>
             </div>
 
-            <h1 className="mb-6 text-[2.25rem] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+            <h1 className="mb-6 text-[2rem] font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-6xl">
               Pay bills in Nepal
               <br className="hidden sm:block" /> from{" "}
               <span className="bg-gradient-to-r from-moss to-moss2 bg-clip-text text-transparent">
@@ -96,7 +96,7 @@ export function Hero() {
             </div>
           </div>
 
-          <div className="relative mx-auto mt-12 w-full max-w-sm lg:mt-0 lg:max-w-none">
+          <div className="relative mx-auto mt-10 w-full max-w-sm px-1 sm:mt-12 lg:mt-0 lg:max-w-none">
             <div className="relative rounded-[2rem] border border-line-2 bg-white p-3 shadow-2xl shadow-moss/10">
               <div className="rounded-[1.5rem] bg-gradient-to-br from-moss to-moss2 p-5 text-white">
                 <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ export function Hero() {
               </div>
             </div>
 
-            <div className="absolute -top-10 -right-2 flex items-center gap-2 rounded-2xl border border-line-2 bg-white px-4 py-3 shadow-xl sm:-right-4 sm:-top-12">
+            <div className="absolute -top-7 right-0 flex items-center gap-2 rounded-2xl border border-line-2 bg-white px-3 py-2.5 shadow-xl sm:-right-4 sm:-top-12 sm:px-4 sm:py-3">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
               <div className="leading-tight">
                 <p className="text-sm font-semibold text-ink">Payment done</p>
@@ -157,14 +157,14 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="mx-auto mt-14 max-w-2xl">
-          <div className="grid grid-cols-3 divide-x divide-line rounded-2xl border border-line bg-white/70 px-4 py-6 shadow-sm backdrop-blur">
+        <div className="mx-auto mt-12 max-w-2xl sm:mt-14">
+          <div className="grid grid-cols-3 divide-x divide-line rounded-2xl border border-line bg-white/70 px-2 py-5 shadow-sm backdrop-blur sm:px-4 sm:py-6">
             {stats.map((stat) => (
-              <div key={stat.label} className="px-2 text-center">
-                <div className="text-2xl font-bold text-ink sm:text-3xl">
+              <div key={stat.label} className="min-w-0 px-1.5 text-center sm:px-2">
+                <div className="text-xl font-bold text-ink sm:text-2xl lg:text-3xl">
                   {stat.value}
                 </div>
-                <div className="mt-1 text-xs text-ink-3 sm:text-sm">
+                <div className="mt-1 text-[0.65rem] leading-tight text-ink-3 sm:text-sm">
                   {stat.label}
                 </div>
               </div>

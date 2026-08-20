@@ -36,6 +36,10 @@
 
 html {
   scrollbar-gutter: stable;
+  /* Prevent any decorative element from causing horizontal scroll on mobile */
+  overflow-x: hidden;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -44,6 +48,8 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Smooth scrollbar (ePayNepal style) */

@@ -48,7 +48,7 @@ export function Features() {
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-moss">
             Why Npay
           </span>
-          <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
             Built for the Nepali Diaspora
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-ink-3 sm:text-lg">
@@ -57,7 +57,7 @@ export function Features() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {features.map((feature, i) => (
             <Reveal key={feature.title} delay={(i % 3) * 100}>
               <div className="group h-full rounded-2xl border border-line bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-moss/25 hover:shadow-lg hover:shadow-moss/5">

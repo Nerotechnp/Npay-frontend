@@ -38,7 +38,7 @@ export function ServicesList() {
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-moss">
             What We Offer
           </span>
-          <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
             Our Services
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-ink-3 sm:text-lg">
@@ -50,7 +50,7 @@ export function ServicesList() {
         <div className="grid gap-6 sm:grid-cols-3">
           {services.map((service, i) => (
             <Reveal key={service.title} delay={i * 100}>
-              <div className="group flex h-full flex-col rounded-2xl border border-line bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-moss/30 hover:shadow-xl hover:shadow-moss/5">
+              <div className="group flex h-full flex-col rounded-2xl border border-line bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-moss/30 hover:shadow-xl hover:shadow-moss/5 sm:p-7">
                 {service.badge && (
                   <span className="mb-4 inline-flex w-fit rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold text-moss">
                     {service.badge}
@@ -72,7 +72,7 @@ export function ServicesList() {
                   href={service.href}
                   className="mt-5 flex w-fit items-center gap-1 text-sm font-medium text-moss"
                 >
-                  Learn more
+                  Get Started
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>

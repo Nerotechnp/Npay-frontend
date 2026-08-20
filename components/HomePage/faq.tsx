@@ -46,7 +46,7 @@ export function Faq() {
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-moss">
             FAQ
           </span>
-          <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
             Frequently Asked Questions
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-ink-3">

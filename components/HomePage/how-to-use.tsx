@@ -36,7 +36,7 @@ export function HowItWorksList() {
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-moss">
             Getting Started
           </span>
-          <h2 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl lg:text-4xl">
             How Npay Works
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-ink-3">
@@ -49,7 +49,7 @@ export function HowItWorksList() {
             aria-hidden="true"
             className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-line-2 to-transparent lg:block"
           />
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:gap-8 lg:grid-cols-4 sm:grid-cols-2">
             {steps.map((step, index) => (
               <Reveal key={step.title} delay={index * 100}>
                 <div className="relative flex h-full flex-col items-center text-center">

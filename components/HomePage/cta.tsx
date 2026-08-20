@@ -4,7 +4,7 @@ import { ArrowRight, Heart } from "lucide-react";
 export function Cta() {
   return (
     <section className="px-4 py-16 sm:px-5 sm:py-20">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-gradient-to-br from-moss to-moss2 px-6 py-14 text-center shadow-xl shadow-moss/20 sm:px-12 sm:py-16">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-gradient-to-br from-moss to-moss2 px-5 py-12 text-center shadow-xl shadow-moss/20 sm:px-12 sm:py-16">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"
@@ -18,7 +18,7 @@ export function Cta() {
           <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white">
             <Heart className="h-4 w-4" /> Support home, from anywhere
           </span>
-          <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="mx-auto max-w-2xl text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
             Ready to send support back home?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-white/80 sm:text-lg">
@@ -35,7 +35,7 @@ export function Cta() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="#services"
+              href="#how-it-works"
               className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/40 bg-white/5 px-7 py-3.5 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-white/15 sm:w-auto"
             >
               See How It Works
