@@ -156,6 +156,12 @@ function GoogleButton() {
     [router]
   );
 
+  const readyRef = useRef(false);
+  const handleCredentialRef = useRef<((idToken: string) => void) | undefined>(undefined);
+  useEffect(() => {
+    handleCredentialRef.current = handleCredential;
+  }, [handleCredential]);
+
   // Render Google's own "Continue with Google" button, which returns an ID
   // token (response.credential) directly. renderButton() reliably opens the
   // account chooser for both signed-in and signed-out users (unlike the OAuth2
@@ -183,14 +189,21 @@ function GoogleButton() {
       const g = (window as any).google;
       if (!g?.accounts?.id) return;
       gRef.current = g;
-      g.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response: any) => {
-          if (response?.credential) handleCredential(response.credential);
-          else setError("Google sign-in failed.");
-        },
-      });
+      // Initialize only once: calling google.accounts.id.initialize() repeatedly
+      // triggers the GSI "called multiple times" warning and only the last
+      // instance is kept. A ref guard also covers the rare case the effect re-runs.
+      if (!gRef.current.__gsiInitialized) {
+        g.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response: any) => {
+            if (response?.credential) handleCredentialRef.current?.(response.credential);
+            else setError("Google sign-in failed.");
+          },
+        });
+        gRef.current.__gsiInitialized = true;
+      }
       renderGoogleButton();
+      readyRef.current = true;
       setReady(true);
     };
 
@@ -215,24 +228,33 @@ function GoogleButton() {
     // If the user cancels the Google account chooser, the rendered button can
     // get stuck in a spinner state. Re-render a fresh button when focus returns.
     const onFocus = () => {
-      if (ready) setTimeout(renderGoogleButton, 300);
+      if (readyRef.current) setTimeout(renderGoogleButton, 300);
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [clientId, handleCredential, renderGoogleButton, ready]);
+    // Mount once: deps are stable (clientId is a constant, renderGoogleButton is
+    // a stable useCallback). `ready` is intentionally excluded — gating on it
+    // re-ran the effect and double-initialized GSI.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, renderGoogleButton]);
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
   }
 
   return (
-    <div>
+    // The btnRef container must stay mounted at all times (GSI writes its button
+    // straight into it, so React must not manage its children). The "not ready"
+    // placeholder is layered on top via absolute positioning so it doesn't add
+    // height — otherwise the area is 88px while loading and collapses to 44px
+    // once GSI loads, making everything below jump up.
+    <div className="relative">
       <div ref={btnRef} className="flex min-h-[44px] w-full justify-center" />
       {!ready && (
         <button
           type="button"
           disabled
-          className="flex h-[44px] w-full items-center justify-center rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink/60"
+          className="absolute inset-0 flex h-[44px] w-full items-center justify-center rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink/60"
         >
           Continue with Google
         </button>
