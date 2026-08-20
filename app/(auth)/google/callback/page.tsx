@@ -2,29 +2,40 @@
 
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api-client";
+import { setTokens } from "@/lib/auth";
+import { useAuthStore } from "@/store/authStore";
 import {
   GOOGLE_AUTH_STORAGE_KEY,
   postGoogleAuthResult,
   type GoogleAuthResult,
 } from "@/lib/google-auth";
 
-// This page is opened inside the Google OAuth popup (or a full-page tab on
-// mobile). Google redirects it to <origin>/google/callback#id_token=... (implicit
-// flow). We read the id_token from the URL fragment, exchange it ONCE for an Npay
-// session via the backend, then hand the session back to the opener (which only
-// stores it) and close. The opener finishes sign-in — no second backend call.
+// This page is opened inside the Google OAuth popup (desktop) or as a
+// full-page redirect (mobile, where popups are blocked). Google redirects it to
+// <origin>/google/callback#id_token=... (implicit flow). We read the id_token
+// from the URL fragment, exchange it ONCE for an Npay session via the backend,
+// then hand the session back: postMessage + close when there's an opener
+// (desktop popup), or navigate ourselves when there isn't (mobile full-page).
 export default function GoogleCallback() {
   const [status, setStatus] = useState("Completing Google sign-in…");
 
   useEffect(() => {
     const finish = (result: GoogleAuthResult) => {
       const origin = window.location.origin;
-      setStatus(result.ok ? "Signed in. Closing…" : result.error);
-      postGoogleAuthResult(result, origin);
       if (result.ok) {
-        setTimeout(() => window.close(), 300);
+        const { access_token, refresh_token, user } = result.payload;
+        setTokens(access_token, refresh_token);
+        useAuthStore.getState().setUser(user);
+      }
+      postGoogleAuthResult(result, origin);
+
+      if (window.opener) {
+        setStatus(result.ok ? "Signed in. Closing…" : result.error);
+        setTimeout(() => window.close(), result.ok ? 300 : 2000);
       } else {
-        setTimeout(() => window.close(), 2000);
+        // No opener → we are the top-level page (mobile full-page flow).
+        // Tokens are already in localStorage/cookie, so just navigate.
+        window.location.href = result.ok ? "/dashboard" : "/login";
       }
     };
 

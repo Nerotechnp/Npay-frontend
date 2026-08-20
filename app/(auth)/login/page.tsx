@@ -197,10 +197,7 @@ function GoogleButton() {
     }
     if (finishedRef.current) return;
     setError("");
-    setLoading(true);
-    // Own OAuth popup (implicit id_token flow) — no GSI, no FedCM. The popup
-    // redirects to /google/callback, which exchanges the id_token for an Npay
-    // session and posts it back to this window.
+
     const redirectUri = `${window.location.origin}/google/callback`;
     const rand = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
     const params = new URLSearchParams({
@@ -212,14 +209,21 @@ function GoogleButton() {
       state: rand(),
       prompt: "select_account",
     });
-    const popup = window.open(
-      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
-      "google-signin",
-      "width=480,height=640"
-    );
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+    // Popups are blocked/unreliable on mobile and some embedded browsers, so
+    // fall back to a full-page redirect there (and whenever a popup can't open).
+    // In that flow the /google/callback page navigates back to /dashboard itself.
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+    if (coarse) {
+      setLoading(true);
+      window.location.href = authUrl;
+      return;
+    }
+    const popup = window.open(authUrl, "google-signin", "width=480,height=640");
     if (!popup) {
-      setLoading(false);
-      setError("Popup blocked. Allow popups for this site and try again.");
+      setLoading(true);
+      window.location.href = authUrl;
       return;
     }
     // If the user closes the popup without completing, reset the button.
