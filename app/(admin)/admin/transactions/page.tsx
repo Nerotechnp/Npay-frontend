@@ -42,16 +42,18 @@ export default function AdminTransactionsPage() {
   const columns: Column<Transaction>[] = [
     {
       key: "id",
-      header: "Transaction ID",
+      header: "TXN ID",
       mobile: "field",
-      render: (tx) => <span className="font-mono text-xs text-ink-3">{tx.id}</span>,
+      headerClassName: "w-[9%]",
+      render: (tx) => <span className="block truncate font-mono text-xs text-ink-3">{tx.id}</span>,
     },
     {
       key: "recipient",
       header: "Recipient",
       mobile: "primary",
+      headerClassName: "w-[15%]",
       render: (tx) => (
-        <div className="min-w-0">
+        <div className="w-full min-w-0">
           <p className="truncate font-medium text-ink">{tx.recipient_number}</p>
           <p className="truncate text-xs text-ink-3">{formatDate(tx.created_at)}</p>
         </div>
@@ -60,20 +62,22 @@ export default function AdminTransactionsPage() {
     {
       key: "amount",
       header: "Amount",
-      mobile: "hide",
-      render: (tx) => <span className="text-ink-2/70">{formatMoney(tx.amount_charged, tx.currency)}</span>,
+      mobile: "field",
+      headerClassName: "w-[9%]",
+      render: (tx) => <span className="whitespace-nowrap text-ink-2/70">{formatMoney(tx.amount_charged, tx.currency)}</span>,
     },
     {
       key: "payment",
       header: "Payment Gateway",
-      mobile: "hide",
+      mobile: "field",
+      headerClassName: "w-[13%]",
       render: (tx) =>
         tx.gateway_reference ? (
-          <div className="min-w-0">
+          <div className="w-full min-w-0">
             <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
               CyberSource
             </span>
-            <p className="mt-1 truncate font-mono text-xs text-ink-3">{tx.gateway_reference}</p>
+            <p className="mt-1 block truncate font-mono text-xs text-ink-3">{tx.gateway_reference}</p>
           </div>
         ) : (
           <span className="text-ink-3">—</span>
@@ -82,9 +86,10 @@ export default function AdminTransactionsPage() {
     {
       key: "status",
       header: "Payment",
+      headerClassName: "w-[9%]",
       render: (tx) => (
         <span
-          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}
+          className={`inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium ${statusTone(tx.status)}`}
         >
           {statusLabel(tx.status)}
         </span>
@@ -93,42 +98,44 @@ export default function AdminTransactionsPage() {
     {
       key: "provider",
       header: "Delivery Provider",
-      mobile: "hide",
+      mobile: "field",
+      headerClassName: "w-[13%]",
       render: (tx) =>
         tx.provider_reference ? (
-          <div className="min-w-0">
+          <div className="w-full min-w-0">
             <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
               {gatewayName(tx.provider_reference)}
             </span>
-            <p className="mt-1 truncate font-mono text-xs text-ink-3">{tx.provider_reference}</p>
+            <p className="mt-1 block truncate font-mono text-xs text-ink-3">{tx.provider_reference}</p>
           </div>
         ) : (
           <span className="text-ink-3">—</span>
         ),
     },
     {
-      key: "response",
-      header: "Response",
-      mobile: "hide",
-      render: (tx) => (
-        <span className="block max-w-[16rem] text-xs text-ink-3">{tx.receipt_message || "—"}</span>
-      ),
-    },
-    {
       key: "delivery",
       header: "Delivery",
+      mobile: "field",
+      span: true,
+      headerClassName: "w-[16%]",
       render: (tx) => (
-        <span
-          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${deliveryStatusTone(tx.delivery_status)}`}
-        >
-          {deliveryStatusLabel(tx.delivery_status)}
-        </span>
+        <div className="w-full min-w-0">
+          <span
+            className={`inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium ${deliveryStatusTone(tx.delivery_status)}`}
+          >
+            {deliveryStatusLabel(tx.delivery_status)}
+          </span>
+          {tx.receipt_message && (
+            <p className="mt-1 block truncate text-xs text-ink-3">{tx.receipt_message}</p>
+          )}
+        </div>
       ),
     },
     {
       key: "override",
       header: "Override",
       align: "right",
+      headerClassName: "w-[15%]",
       render: (tx) => (
         <div className="flex flex-col items-end gap-1.5">
           {tx.status === "success" && tx.delivery_status === "failed" && (

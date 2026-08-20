@@ -51,14 +51,14 @@ export function DataTable<T>({
       {/* Desktop: classic table */}
       <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
-          <table className="admin-table w-full text-left text-sm">
+          <table className="admin-table w-full table-fixed text-left text-sm">
             <thead className="border-b border-line bg-paper text-xs font-medium uppercase tracking-wide text-ink-3">
               <tr>
                 {columns.map((c) => (
-                  <th
-                    key={c.key}
-                    className={`px-4 py-3 ${alignClass[c.align ?? "left"]} ${c.headerClassName ?? ""}`}
-                  >
+                   <th
+                     key={c.key}
+                     className={`px-3 py-3 ${alignClass[c.align ?? "left"]} ${c.headerClassName ?? ""}`}
+                   >
                     {c.header}
                   </th>
                 ))}
@@ -91,7 +91,7 @@ export function DataTable<T>({
                     {columns.map((c) => (
                       <td
                         key={c.key}
-                        className={`px-4 py-3 align-middle ${alignClass[c.align ?? "left"]} ${c.cellClassName ?? ""}`}
+                        className={`px-3 py-3 align-middle ${alignClass[c.align ?? "left"]} ${c.cellClassName ?? ""}`}
                       >
                         {c.render(row)}
                       </td>
