@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   useAdminTransactions,
   useUpdateAdminTransactionStatus,
@@ -45,7 +46,14 @@ export default function AdminTransactionsPage() {
       header: "TXN ID",
       mobile: "field",
       headerClassName: "w-[9%]",
-      render: (tx) => <span className="block truncate font-mono text-xs text-ink-3">{tx.id}</span>,
+      render: (tx) => (
+        <Link
+          href={`/admin/transactions/${tx.id}`}
+          className="block truncate font-mono text-xs font-medium text-moss hover:underline"
+        >
+          {tx.id}
+        </Link>
+      ),
     },
     {
       key: "recipient",

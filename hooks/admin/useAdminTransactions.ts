@@ -16,6 +16,19 @@ export function useAdminTransactions(status: TransactionStatus | "", offset: num
   });
 }
 
+export function useAdminTransaction(id: string) {
+  return useQuery({
+    queryKey: ["admin", "transaction", id],
+    queryFn: async () => {
+      const res = await apiClient.get<ApiSuccess<Transaction>>(
+        `/api/v1/admin/transactions/${id}`
+      );
+      return res.data.data;
+    },
+    enabled: Boolean(id),
+  });
+}
+
 export function useUpdateAdminTransactionStatus() {
   const queryClient = useQueryClient();
   return useMutation({
