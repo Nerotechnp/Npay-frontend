@@ -176,8 +176,14 @@ function GoogleButton() {
   const renderGoogleButton = useCallback(() => {
     const g = gRef.current;
     if (!g?.accounts?.id || !btnRef.current) return;
+    // Render into a brand-new child node every time. After the user cancels the
+    // chooser, GSI can leave the rendered button in a "processing"/disabled
+    // state that re-rendering into the SAME node doesn't clear (especially on
+    // mobile). A fresh node forces GSI to build a new, clickable button widget.
     btnRef.current.innerHTML = "";
-    g.accounts.id.renderButton(btnRef.current, {
+    const slot = document.createElement("div");
+    btnRef.current.appendChild(slot);
+    g.accounts.id.renderButton(slot, {
       theme: "outline",
       size: "large",
       width: btnRef.current.clientWidth || 320,
@@ -185,6 +191,11 @@ function GoogleButton() {
     });
     lastRenderTs.current = Date.now();
   }, []);
+
+  // Set true only once the user has actually opened the chooser. Recovery
+  // re-renders are gated on this so we never re-render (and flash the GSI
+  // iframe) on the initial page load — only after a real open/dismiss cycle.
+  const interactedRef = useRef(false);
 
   useEffect(() => {
     if (!clientId) {
@@ -239,10 +250,15 @@ function GoogleButton() {
     // `visibilitychange` (returning from an external chooser app) and on a short
     // delay after any click on the button itself.
     const recover = (minGap = 800) => {
-      // Skip a re-render that lands right after a fresh render (e.g. the window
-      // "focus" event on initial load) — otherwise the button flashes and looks
-      // like it jumps. minGap lets the click recovery reuse a shorter window.
-      if (readyRef.current && Date.now() - lastRenderTs.current > minGap) {
+      // Only recover after the user has opened the chooser (interactedRef). On
+      // initial load the window "focus" event would otherwise trigger a needless
+      // re-render that flashes the GSI iframe. minGap also skips a re-render that
+      // lands right after a fresh render.
+      if (
+        interactedRef.current &&
+        readyRef.current &&
+        Date.now() - lastRenderTs.current > minGap
+      ) {
         setTimeout(renderGoogleButton, 300);
       }
     };
@@ -250,17 +266,25 @@ function GoogleButton() {
     const onVisibility = () => {
       if (document.visibilityState === "visible") recover();
     };
+    // Mobile "back" often restores the page from bfcache, where focus/visibility
+    // don't fire reliably — pageshow does, so recovery still runs there.
+    const onPageShow = () => recover();
     const onResize = () => recover();
     const onClickCapture = () => {
+      // Mark that a chooser session started; recovery (re-render) is now allowed
+      // so a dismissal/cancel leaves the button clickable again.
+      interactedRef.current = true;
       if (readyRef.current) setTimeout(renderGoogleButton, 1500);
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pageshow", onPageShow);
     window.addEventListener("resize", onResize);
     btnRef.current?.addEventListener("click", onClickCapture, true);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("resize", onResize);
       btnRef.current?.removeEventListener("click", onClickCapture, true);
     };
@@ -283,7 +307,7 @@ function GoogleButton() {
     <div className="relative h-[44px]">
       <div ref={btnRef} className="flex h-[44px] w-full justify-center" />
       {!ready && (
-        <div className="absolute inset-0 h-[44px] w-full animate-pulse rounded-lg bg-line" />
+        <div className="absolute inset-0 h-[44px] w-full rounded-lg bg-line" />
       )}
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
