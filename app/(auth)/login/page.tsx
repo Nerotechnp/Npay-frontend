@@ -131,13 +131,13 @@ export default function LoginPage() {
 
 function GoogleButton() {
   const [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const btnRef = useRef<HTMLDivElement>(null);
-  const gRef = useRef<any>(null);
-
   const router = useRouter();
 
+  // Exchange the Google id_token (returned by our own OAuth popup) for an Npay
+  // session. Runs in this parent window after the popup callback posts the token
+  // back via postMessage. This component never loads the GSI script, so there is
+  // no FedCM involvement and none of the "AbortError"/deprecation noise.
   const handleCredential = useCallback(
     async (idToken: string) => {
       try {
@@ -145,9 +145,8 @@ function GoogleButton() {
         const { access_token, refresh_token, user } = res.data.data;
         setTokens(access_token, refresh_token);
         useAuthStore.getState().setUser(user);
-        // Hard navigation so the freshly-set token cookie is sent on the
-        // first request (a client-side router.push can miss it, bouncing
-        // /dashboard -> /login before settling on the dashboard).
+        // Hard navigation so the freshly-set token is sent on the first request
+        // (a client-side router.push can miss it, bouncing /dashboard -> /login).
         window.location.href = "/dashboard";
       } catch (err: any) {
         setError(err?.response?.data?.error || "Google sign-in failed.");
@@ -156,161 +155,86 @@ function GoogleButton() {
     [router]
   );
 
-  const readyRef = useRef(false);
-  const handleCredentialRef = useRef<((idToken: string) => void) | undefined>(undefined);
   useEffect(() => {
-    handleCredentialRef.current = handleCredential;
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "google-signin" && e.data?.idToken) {
+        handleCredential(e.data.idToken);
+      } else if (e.data?.type === "google-signin-error") {
+        setError(e.data.error || "Google sign-in failed.");
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, [handleCredential]);
 
-  // Render Google's own "Continue with Google" button, which returns an ID
-  // token (response.credential) directly. renderButton() reliably opens the
-  // account chooser for both signed-in and signed-out users (unlike the OAuth2
-  // token client, which only returns an access token, and prompt(), which can
-  // fail with a FedCM NetworkError).
-  // Tracks when the button was last (re)rendered so recovery logic can skip a
-  // re-render that lands immediately after a fresh render (e.g. the window
-  // "focus" event that fires on initial page load), which would otherwise flash
-  // the button and look like a jump.
-  const lastRenderTs = useRef(0);
-
-  const renderGoogleButton = useCallback(() => {
-    const g = gRef.current;
-    if (!g?.accounts?.id || !btnRef.current) return;
-    // Render into a brand-new child node every time. After the user cancels the
-    // chooser, GSI can leave the rendered button in a "processing"/disabled
-    // state that re-rendering into the SAME node doesn't clear (especially on
-    // mobile). A fresh node forces GSI to build a new, clickable button widget.
-    btnRef.current.innerHTML = "";
-    const slot = document.createElement("div");
-    btnRef.current.appendChild(slot);
-    g.accounts.id.renderButton(slot, {
-      theme: "outline",
-      size: "large",
-      width: btnRef.current.clientWidth || 320,
-      text: "continue_with",
-    });
-    lastRenderTs.current = Date.now();
-  }, []);
-
-  // Set true only once the user has actually opened the chooser. Recovery
-  // re-renders are gated on this so we never re-render (and flash the GSI
-  // iframe) on the initial page load — only after a real open/dismiss cycle.
-  const interactedRef = useRef(false);
-
-  useEffect(() => {
+  const handleGoogle = useCallback(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
-
-    const init = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id) return;
-      gRef.current = g;
-      // Initialize only once: calling google.accounts.id.initialize() repeatedly
-      // triggers the GSI "called multiple times" warning and only the last
-      // instance is kept. A ref guard also covers the rare case the effect re-runs.
-      if (!gRef.current.__gsiInitialized) {
-        g.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response: any) => {
-            if (response?.credential) handleCredentialRef.current?.(response.credential);
-            else setError("Google sign-in failed.");
-          },
-        });
-        gRef.current.__gsiInitialized = true;
-      }
-      renderGoogleButton();
-      readyRef.current = true;
-      setReady(true);
-    };
-
-    if ((window as any).google?.accounts?.id) {
-      init();
-      return;
-    }
-
-    const existing = document.getElementById("gsi-client-script");
-    if (!existing) {
-      const script = document.createElement("script");
-      script.id = "gsi-client-script";
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.onload = init;
-      script.onerror = () => setError("Failed to load Google sign-in.");
-      document.body.appendChild(script);
-    } else {
-      existing.addEventListener("load", init, { once: true });
-    }
-
-    // If the user cancels/dismisses the Google account chooser, the rendered
-    // button can get stuck in a "processing" spinner and stop responding to
-    // clicks. Re-render a fresh button to recover. Desktop fires `focus` when the
-    // chooser closes; mobile in-page sheets often don't, so also recover on
-    // `visibilitychange` (returning from an external chooser app) and on a short
-    // delay after any click on the button itself.
-    const recover = (minGap = 800) => {
-      // Only recover after the user has opened the chooser (interactedRef). On
-      // initial load the window "focus" event would otherwise trigger a needless
-      // re-render that flashes the GSI iframe. minGap also skips a re-render that
-      // lands right after a fresh render.
-      if (
-        interactedRef.current &&
-        readyRef.current &&
-        Date.now() - lastRenderTs.current > minGap
-      ) {
-        setTimeout(renderGoogleButton, 300);
-      }
-    };
-    const onFocus = () => recover();
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") recover();
-    };
-    // Mobile "back" often restores the page from bfcache, where focus/visibility
-    // don't fire reliably — pageshow does, so recovery still runs there.
-    const onPageShow = () => recover();
-    const onResize = () => recover();
-    const onClickCapture = () => {
-      // Mark that a chooser session started; recovery (re-render) is now allowed
-      // so a dismissal/cancel leaves the button clickable again.
-      interactedRef.current = true;
-      if (readyRef.current) setTimeout(renderGoogleButton, 1500);
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("pageshow", onPageShow);
-    window.addEventListener("resize", onResize);
-    btnRef.current?.addEventListener("click", onClickCapture, true);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("pageshow", onPageShow);
-      window.removeEventListener("resize", onResize);
-      btnRef.current?.removeEventListener("click", onClickCapture, true);
-    };
-    // Mount once: deps are stable (clientId is a constant, renderGoogleButton is
-    // a stable useCallback). `ready` is intentionally excluded — gating on it
-    // re-ran the effect and double-initialized GSI.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId, renderGoogleButton]);
+    // Own OAuth popup (implicit id_token flow) — no GSI, no FedCM. The popup
+    // redirects to /google/callback, which posts the id_token back to this window.
+    const redirectUri = `${window.location.origin}/google/callback`;
+    const rand = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "id_token",
+      scope: "openid email profile",
+      nonce: rand(),
+      state: rand(),
+      prompt: "select_account",
+    });
+    const popup = window.open(
+      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+      "google-signin",
+      "width=480,height=640"
+    );
+    if (!popup) setError("Popup blocked. Allow popups for this site and try again.");
+  }, [clientId, router]);
 
   if (!clientId) {
     return <p className="text-xs text-danger">{error}</p>;
   }
 
   return (
-    // The btnRef container stays mounted at all times (GSI writes its button
-    // straight into it, so React must not manage its children). The height is
-    // locked to 44px and the loading skeleton is absolutely positioned, so the
-    // only thing that changes is the button itself appearing inside the same
-    // reserved box — neighbours never shift, and there is no content-swap flash.
-    <div className="relative h-[44px]">
-      <div ref={btnRef} className="flex h-[44px] w-full justify-center" />
-      {!ready && (
-        <div className="absolute inset-0 h-[44px] w-full rounded-lg bg-line" />
-      )}
+    <div>
+      <button
+        type="button"
+        onClick={handleGoogle}
+        className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-paper"
+      >
+        <GoogleGIcon />
+        Continue with Google
+      </button>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
+  );
+}
+
+// Inline 4-colour Google "G" so the button looks like the standard
+// "Continue with Google" without loading an extra asset.
+function GoogleGIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6.01C43.93 39.05 46.98 34.11 46.98 24.55z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6.01c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
   );
 }
 
