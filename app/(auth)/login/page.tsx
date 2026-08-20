@@ -23,7 +23,17 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (getAccessToken()) router.replace("/dashboard");
+    const check = () => {
+      if (getAccessToken()) router.replace("/dashboard");
+    };
+    check();
+    // Re-check on bfcache restore (mobile back/forward) — effects don't re-run
+    // when the page is restored from the Back/Forward cache.
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) check();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, [router]);
 
   // Focus the email field without scrolling the page, so mobile reloads don't
@@ -190,6 +200,21 @@ function GoogleButton() {
     };
   }, [finishLogin, failLogin]);
 
+  // On mobile the Google flow is a full-page redirect; when the user comes back
+  // the page may be restored from the bfcache with the frozen "Signing in…"
+  // state. Reset it (and clear any partial result) on cache restore.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        finishedRef.current = false;
+        setLoading(false);
+        setError("");
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   const handleGoogle = useCallback(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
@@ -220,7 +245,15 @@ function GoogleButton() {
       window.location.href = authUrl;
       return;
     }
-    const popup = window.open(authUrl, "google-signin", "width=480,height=640");
+    const w = 480;
+    const h = 640;
+    const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
+    const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
+    const popup = window.open(
+      authUrl,
+      "google-signin",
+      `popup=yes,width=${w},height=${h},left=${Math.round(left)},top=${Math.round(top)}`
+    );
     if (!popup) {
       setLoading(true);
       window.location.href = authUrl;
