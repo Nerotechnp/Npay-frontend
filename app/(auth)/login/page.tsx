@@ -7,6 +7,11 @@ import { MoveLeft, ShieldCheck, Globe, Zap } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { getAccessToken, setTokens } from "@/lib/auth";
 import { useAuthStore } from "@/store/authStore";
+import {
+  GOOGLE_AUTH_STORAGE_KEY,
+  type GoogleAuthPayload,
+  type GoogleAuthResult,
+} from "@/lib/google-auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -131,50 +136,71 @@ export default function LoginPage() {
 
 function GoogleButton() {
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const router = useRouter();
+  // Guards against the result arriving twice (postMessage + storage event).
+  const finishedRef = useRef(false);
 
-  // Exchange the Google id_token (returned by our own OAuth popup) for an Npay
-  // session. Runs in this parent window after the popup callback posts the token
-  // back via postMessage. This component never loads the GSI script, so there is
-  // no FedCM involvement and none of the "AbortError"/deprecation noise.
-  const handleCredential = useCallback(
-    async (idToken: string) => {
-      try {
-        const res = await apiClient.post("/api/v1/auth/google", { id_token: idToken });
-        const { access_token, refresh_token, user } = res.data.data;
-        setTokens(access_token, refresh_token);
-        useAuthStore.getState().setUser(user);
-        // Hard navigation so the freshly-set token is sent on the first request
-        // (a client-side router.push can miss it, bouncing /dashboard -> /login).
-        window.location.href = "/dashboard";
-      } catch (err: any) {
-        setError(err?.response?.data?.error || "Google sign-in failed.");
-      }
-    },
-    [router]
-  );
+  const finishLogin = useCallback((payload: GoogleAuthPayload) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setTokens(payload.access_token, payload.refresh_token);
+    useAuthStore.getState().setUser(payload.user);
+    // Hard navigation so the freshly-set token is sent on the first request
+    // (a client-side router.push can miss it, bouncing /dashboard -> /login).
+    window.location.href = "/dashboard";
+  }, []);
 
+  const failLogin = useCallback((msg: string) => {
+    if (finishedRef.current) return;
+    setError(msg);
+    setLoading(false);
+  }, []);
+
+  // Receive the Npay session from the popup. postMessage covers a real popup;
+  // the "storage" event covers mobile, where the "popup" may open as a
+  // full-page tab with window.opener unreliable.
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== window.location.origin) return;
-      if (e.data?.type === "google-signin" && e.data?.idToken) {
-        handleCredential(e.data.idToken);
+      if (e.data?.type === "google-signin" && e.data?.payload) {
+        finishLogin(e.data.payload as GoogleAuthPayload);
       } else if (e.data?.type === "google-signin-error") {
-        setError(e.data.error || "Google sign-in failed.");
+        failLogin(e.data.error || "Google sign-in failed.");
+      }
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== GOOGLE_AUTH_STORAGE_KEY || !e.newValue) return;
+      try {
+        const result = JSON.parse(e.newValue) as GoogleAuthResult;
+        if (result.ok) finishLogin(result.payload);
+        else failLogin(result.error);
+      } catch {
+        /* ignore malformed payloads */
+      } finally {
+        localStorage.removeItem(GOOGLE_AUTH_STORAGE_KEY);
       }
     };
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [handleCredential]);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [finishLogin, failLogin]);
 
   const handleGoogle = useCallback(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.");
       return;
     }
+    if (finishedRef.current) return;
+    setError("");
+    setLoading(true);
     // Own OAuth popup (implicit id_token flow) — no GSI, no FedCM. The popup
-    // redirects to /google/callback, which posts the id_token back to this window.
+    // redirects to /google/callback, which exchanges the id_token for an Npay
+    // session and posts it back to this window.
     const redirectUri = `${window.location.origin}/google/callback`;
     const rand = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
     const params = new URLSearchParams({
@@ -191,7 +217,21 @@ function GoogleButton() {
       "google-signin",
       "width=480,height=640"
     );
-    if (!popup) setError("Popup blocked. Allow popups for this site and try again.");
+    if (!popup) {
+      setLoading(false);
+      setError("Popup blocked. Allow popups for this site and try again.");
+      return;
+    }
+    // If the user closes the popup without completing, reset the button.
+    const timer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(timer);
+        if (!finishedRef.current) {
+          setLoading(false);
+          setError("Google sign-in was cancelled.");
+        }
+      }
+    }, 500);
   }, [clientId, router]);
 
   if (!clientId) {
@@ -203,13 +243,32 @@ function GoogleButton() {
       <button
         type="button"
         onClick={handleGoogle}
-        className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-paper"
+        disabled={loading}
+        className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <GoogleGIcon />
-        Continue with Google
+        {loading ? <Spinner /> : <GoogleGIcon />}
+        {loading ? "Signing in…" : "Continue with Google"}
       </button>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="h-4 w-4 animate-spin text-ink-3"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"
+      />
+    </svg>
   );
 }
 
