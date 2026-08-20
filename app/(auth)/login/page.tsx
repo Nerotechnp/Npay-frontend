@@ -167,6 +167,12 @@ function GoogleButton() {
   // account chooser for both signed-in and signed-out users (unlike the OAuth2
   // token client, which only returns an access token, and prompt(), which can
   // fail with a FedCM NetworkError).
+  // Tracks when the button was last (re)rendered so recovery logic can skip a
+  // re-render that lands immediately after a fresh render (e.g. the window
+  // "focus" event that fires on initial page load), which would otherwise flash
+  // the button and look like a jump.
+  const lastRenderTs = useRef(0);
+
   const renderGoogleButton = useCallback(() => {
     const g = gRef.current;
     if (!g?.accounts?.id || !btnRef.current) return;
@@ -177,6 +183,7 @@ function GoogleButton() {
       width: btnRef.current.clientWidth || 320,
       text: "continue_with",
     });
+    lastRenderTs.current = Date.now();
   }, []);
 
   useEffect(() => {
@@ -225,13 +232,38 @@ function GoogleButton() {
       existing.addEventListener("load", init, { once: true });
     }
 
-    // If the user cancels the Google account chooser, the rendered button can
-    // get stuck in a spinner state. Re-render a fresh button when focus returns.
-    const onFocus = () => {
-      if (readyRef.current) setTimeout(renderGoogleButton, 300);
+    // If the user cancels/dismisses the Google account chooser, the rendered
+    // button can get stuck in a "processing" spinner and stop responding to
+    // clicks. Re-render a fresh button to recover. Desktop fires `focus` when the
+    // chooser closes; mobile in-page sheets often don't, so also recover on
+    // `visibilitychange` (returning from an external chooser app) and on a short
+    // delay after any click on the button itself.
+    const recover = (minGap = 800) => {
+      // Skip a re-render that lands right after a fresh render (e.g. the window
+      // "focus" event on initial load) — otherwise the button flashes and looks
+      // like it jumps. minGap lets the click recovery reuse a shorter window.
+      if (readyRef.current && Date.now() - lastRenderTs.current > minGap) {
+        setTimeout(renderGoogleButton, 300);
+      }
+    };
+    const onFocus = () => recover();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") recover();
+    };
+    const onResize = () => recover();
+    const onClickCapture = () => {
+      if (readyRef.current) setTimeout(renderGoogleButton, 1500);
     };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("resize", onResize);
+    btnRef.current?.addEventListener("click", onClickCapture, true);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", onResize);
+      btnRef.current?.removeEventListener("click", onClickCapture, true);
+    };
     // Mount once: deps are stable (clientId is a constant, renderGoogleButton is
     // a stable useCallback). `ready` is intentionally excluded — gating on it
     // re-ran the effect and double-initialized GSI.
@@ -243,21 +275,15 @@ function GoogleButton() {
   }
 
   return (
-    // The btnRef container must stay mounted at all times (GSI writes its button
-    // straight into it, so React must not manage its children). The "not ready"
-    // placeholder is layered on top via absolute positioning so it doesn't add
-    // height — otherwise the area is 88px while loading and collapses to 44px
-    // once GSI loads, making everything below jump up.
-    <div className="relative">
-      <div ref={btnRef} className="flex min-h-[44px] w-full justify-center" />
+    // The btnRef container stays mounted at all times (GSI writes its button
+    // straight into it, so React must not manage its children). The height is
+    // locked to 44px and the loading skeleton is absolutely positioned, so the
+    // only thing that changes is the button itself appearing inside the same
+    // reserved box — neighbours never shift, and there is no content-swap flash.
+    <div className="relative h-[44px]">
+      <div ref={btnRef} className="flex h-[44px] w-full justify-center" />
       {!ready && (
-        <button
-          type="button"
-          disabled
-          className="absolute inset-0 flex h-[44px] w-full items-center justify-center rounded-lg border border-line-2 bg-white px-4 text-sm font-medium text-ink/60"
-        >
-          Continue with Google
-        </button>
+        <div className="absolute inset-0 h-[44px] w-full animate-pulse rounded-lg bg-line" />
       )}
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
     </div>
