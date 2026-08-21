@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       user={user}
       brandLabel="Npay"
       navItems={items}
+      mobileNav="bottom"
       onLogout={() => {
         logout();
         router.push("/login");

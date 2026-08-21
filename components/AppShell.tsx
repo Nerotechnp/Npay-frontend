@@ -19,6 +19,8 @@ interface AppShellProps {
   onLogout: () => void;
   navItems: ShellNavItem[];
   brandLabel?: string;
+  /** "drawer" (default) shows a hamburger + slide-in sidebar; "bottom" shows a bottom tab bar (like the old dashboard). */
+  mobileNav?: "drawer" | "bottom";
   children: ReactNode;
 }
 
@@ -35,10 +37,12 @@ export function AppShell({
   onLogout,
   navItems,
   brandLabel = "Npay",
+  mobileNav = "drawer",
   children,
 }: AppShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const isBottom = mobileNav === "bottom";
 
   // Lock background scroll while the mobile sidebar drawer is open
   useEffect(() => {
@@ -65,8 +69,8 @@ export function AppShell({
         className="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-saffron/[0.12] blur-[80px]"
       />
 
-      {/* Brand */}
-      <div className="relative flex h-16 items-center justify-between px-5">
+        {/* Brand */}
+        <div className="relative flex h-16 items-center justify-between px-5">
         <Link href="/dashboard" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-moss to-moss2 text-base font-extrabold tracking-tight text-white shadow-lg shadow-moss/25">
             N
@@ -150,47 +154,91 @@ export function AppShell({
         {sideContent}
       </aside>
 
-      {/* Mobile drawer */}
-      <div
-        className={`fixed inset-0 z-40 lg:hidden ${open ? "" : "pointer-events-none"}`}
-        aria-hidden={!open}
-      >
+      {/* Mobile drawer (drawer mode only) */}
+      {!isBottom && (
         <div
-          onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-            open ? "opacity-100" : "opacity-0"
-          }`}
-        />
-        <aside
-          className={`absolute inset-y-0 left-0 w-64 max-w-[80%] overflow-hidden border-r border-line-2 bg-white shadow-2xl shadow-black/40 transition-transform duration-300 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed inset-0 z-40 lg:hidden ${open ? "" : "pointer-events-none"}`}
+          aria-hidden={!open}
         >
-          {sideContent}
-        </aside>
-      </div>
+          <div
+            onClick={() => setOpen(false)}
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+              open ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          <aside
+            className={`absolute inset-y-0 left-0 w-64 max-w-[80%] overflow-hidden border-r border-line-2 bg-white shadow-2xl shadow-black/40 transition-transform duration-300 ${
+              open ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            {sideContent}
+          </aside>
+        </div>
+      )}
 
       {/* Content column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
-          <button
-            type="button"
-            aria-label="Open menu"
-            onClick={() => setOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-paper"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-moss to-moss2 text-[13px] font-extrabold tracking-tight text-white">
-              N
-            </span>
-            <span className="text-sm font-semibold text-ink">{brandLabel}</span>
-          </Link>
-        </header>
+        {isBottom ? (
+          <header className="sticky top-0 z-20 flex h-14 items-center border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-moss to-moss2 text-[13px] font-extrabold tracking-tight text-white">
+                N
+              </span>
+              <span className="text-sm font-semibold text-ink">{brandLabel}</span>
+            </Link>
+          </header>
+        ) : (
+          <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-paper"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-moss to-moss2 text-[13px] font-extrabold tracking-tight text-white">
+                N
+              </span>
+              <span className="text-sm font-semibold text-ink">{brandLabel}</span>
+            </Link>
+          </header>
+        )}
 
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className={`mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8 ${isBottom ? "pb-24 lg:pb-8" : ""}`}>
+          {children}
+        </main>
+
+        {/* Bottom tab bar (bottom mode only) */}
+        {isBottom && (
+          <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-2 bg-white/95 backdrop-blur lg:hidden">
+            {navItems.map(({ href, label, icon: Icon, exact }) => {
+              const active = isActive({ href, label, icon: Icon, exact });
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+                    active ? "text-moss" : "text-ink-3"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-ink-3"
+            >
+              <LogOut className="h-5 w-5" />
+              Log out
+            </button>
+          </nav>
+        )}
       </div>
     </div>
   );
