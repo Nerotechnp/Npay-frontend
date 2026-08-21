@@ -1,23 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, Users, Package, Receipt, Network, LogOut, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LayoutGrid, Users, Package, Receipt, Network, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getAccessToken } from "@/lib/auth";
+import { AppShell, type ShellNavItem } from "@/components/AppShell";
 
-const navItems = [
-  { href: "/admin", label: "Overview", icon: LayoutGrid },
+const navItems: ShellNavItem[] = [
+  { href: "/admin", label: "Overview", icon: LayoutGrid, exact: true },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/transactions", label: "Transactions", icon: Receipt },
   { href: "/admin/gateways", label: "Gateways", icon: Network },
+  { href: "/dashboard", label: "Back to app", icon: ArrowLeft },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout } = useAuth();
-  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
@@ -38,118 +38,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
-  const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
-
   return (
-    <div className="flex min-h-screen flex-col bg-paper lg:flex-row">
-      {/* Desktop sidebar — the only navigation on large screens */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-line-2 bg-white lg:sticky lg:top-0 lg:h-screen lg:flex">
-        <div className="flex h-16 items-center gap-2 border-b border-line-2 px-6">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-moss text-sm font-extrabold tracking-tight text-white">
-            N
-          </span>
-          <span className="text-base font-bold tracking-tight text-ink">Npay Admin</span>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-4">
-          {navItems.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                isActive(href)
-                  ? "bg-moss text-white shadow-sm shadow-moss/20"
-                  : "text-ink-2 hover:bg-paper hover:text-ink"
-              }`}
-            >
-              <Icon className="h-[1.125rem] w-[1.125rem]" />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="border-t border-line-2 p-4">
-          <Link
-            href="/dashboard"
-            className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-3 transition-colors hover:bg-paper hover:text-ink"
-          >
-            <ShieldCheck className="h-[1.125rem] w-[1.125rem]" />
-            Back to app
-          </Link>
-          <div className="flex items-center justify-between gap-2 rounded-xl bg-paper px-3 py-2.5">
-            <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-ink">{user.full_name || user.email}</p>
-              <p className="truncate text-[11px] text-ink-3">{user.is_admin ? "Administrator" : "User"}</p>
-            </div>
-            <button
-              onClick={() => {
-                logout();
-                router.push("/login");
-              }}
-              aria-label="Log out"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-red-50 hover:text-danger"
-            >
-              <LogOut className="h-[1.125rem] w-[1.125rem]" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile top header — branding + logout, mirrors dashboard pattern */}
-      <header className="sticky top-0 z-30 border-b border-line-2 bg-white lg:hidden">
-        <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/admin" className="flex shrink-0 items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-moss text-[13px] font-extrabold tracking-tight text-white">
-              N
-            </span>
-            <span className="text-sm font-bold tracking-tight text-ink">Npay Admin</span>
-          </Link>
-          <div className="flex items-center gap-1">
-            <Link
-              href="/dashboard"
-              aria-label="Back to app"
-              className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium text-ink-3 transition-colors hover:bg-paper hover:text-ink"
-            >
-              <ShieldCheck className="h-[1.125rem] w-[1.125rem]" />
-              <span>Back to app</span>
-            </Link>
-            <button
-              onClick={() => {
-                logout();
-                router.push("/login");
-              }}
-              aria-label="Log out"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-red-50 hover:text-danger"
-            >
-              <LogOut className="h-[1.125rem] w-[1.125rem]" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Page content — single bottom tab bar on mobile, no second top bar */}
-      <div className="flex min-h-screen flex-1 flex-col">
-        <main className="flex-1 px-4 pb-24 pt-5 lg:px-8 lg:pb-10 lg:pt-8">{children}</main>
-      </div>
-
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-2 bg-white/95 backdrop-blur lg:hidden">
-        {navItems.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
-              isActive(href) ? "text-moss" : "text-ink-3"
-            }`}
-          >
-            {isActive(href) && (
-              <span className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-moss" />
-            )}
-            <Icon className="h-5 w-5" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-    </div>
+    <AppShell
+      user={user}
+      brandLabel="Npay Admin"
+      navItems={navItems}
+      onLogout={() => {
+        logout();
+        router.push("/login");
+      }}
+    >
+      {children}
+    </AppShell>
   );
 }

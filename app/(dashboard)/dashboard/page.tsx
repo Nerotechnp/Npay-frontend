@@ -34,21 +34,12 @@ function deriveFirstName(user: { full_name?: string; email?: string } | null): s
   return first.includes("@") ? first.split("@")[0] : first;
 }
 
-function deriveInitials(user: { full_name?: string; email?: string } | null): string {
-  if (!user) return "N";
-  const source = (user.full_name || user.email || "N P").trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return source.slice(0, 2).toUpperCase();
-}
-
 export default function DashboardPage() {
   const { data: products, isLoading, isError } = useServices();
   const { data: transactions } = useTransactions();
   const { user } = useAuth();
   const firstName = deriveFirstName(user);
   const greeting = getGreeting();
-  const initials = deriveInitials(user);
 
   const tiles: Tile[] = useMemo(() => {
     const active = (products || []).filter((p: Product) => p.is_active);
@@ -99,7 +90,14 @@ export default function DashboardPage() {
   }, [transactions]);
 
   return (
-    <div className="space-y-8">
+    <div className="relative">
+      {/* Full-bleed brand background, matching the profile page */}
+      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
+        <div className="pointer-events-none absolute -top-32 right-0 h-[42rem] w-[42rem] rounded-full bg-moss/[0.14] blur-[130px]" />
+        <div className="pointer-events-none absolute -bottom-32 left-0 h-[38rem] w-[38rem] rounded-full bg-saffron/[0.16] blur-[130px]" />
+      </div>
+
+      <div className="space-y-8">
       {/* Hero + stats banner */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss via-[#e11d48] to-[#9f1239] p-6 text-white shadow-lg shadow-red-900/10 sm:p-8">
         <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
@@ -118,11 +116,6 @@ export default function DashboardPage() {
             <p className="mt-2 max-w-md text-sm text-white/75">
               Pick a service, enter the details, and pay securely with your card — in any currency.
             </p>
-          </div>
-          <div className="hidden shrink-0 sm:flex">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-xl font-bold ring-1 ring-white/25 backdrop-blur">
-              {initials}
-            </div>
           </div>
         </div>
 
@@ -180,6 +173,7 @@ export default function DashboardPage() {
 
       {/* Recent activity */}
       <RecentActivity transactions={transactions} />
+      </div>
     </div>
   );
 }

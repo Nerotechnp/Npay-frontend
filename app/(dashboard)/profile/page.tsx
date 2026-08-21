@@ -40,31 +40,58 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="font-display text-2xl text-ink">Profile</h1>
-      <p className="mt-1 text-sm text-ink-3">{user.email}</p>
+    <div className="relative flex min-h-full flex-1 flex-col items-center justify-center px-4 py-10">
+      {/* Full-bleed brand background, same style as the login page */}
+      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
+        <div className="pointer-events-none absolute -top-40 right-0 h-[32rem] w-[32rem] rounded-full bg-moss/[0.10] blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-40 left-0 h-[30rem] w-[30rem] rounded-full bg-saffron/[0.12] blur-[120px]" />
+      </div>
 
-      <Card className="mt-6">
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <Input
-            label="Full name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Your name"
-          />
-          <Input
-            label="Country"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="e.g. Australia"
-          />
-          {error && <p className="text-xs text-danger">{error}</p>}
-          {saved && <p className="text-xs text-moss">Saved.</p>}
-          <Button type="submit" loading={loading} className="w-full">
-            Save changes
-          </Button>
-        </form>
-      </Card>
+      <div className="relative w-full max-w-md">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">Your profile</h1>
+          <p className="mt-2 text-sm text-ink-3">{user.email}</p>
+          <span
+            className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              user.is_admin
+                ? "bg-moss/10 text-moss"
+                : "bg-saffron/10 text-saffron"
+            }`}
+          >
+            {user.is_admin ? "Administrator" : "Member"}
+          </span>
+        </div>
+
+        <Card className="p-6 shadow-md shadow-moss/5 sm:p-7">
+          <form onSubmit={handleSave} className="flex flex-col gap-4">
+            <Input
+              label="Full name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your name"
+            />
+            <Input
+              label="Country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              placeholder="e.g. Australia"
+            />
+            {error && (
+              <div className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-xs text-danger">
+                {error}
+              </div>
+            )}
+            {saved && (
+              <div className="rounded-lg border border-moss/20 bg-moss/5 px-3 py-2 text-xs text-moss">
+                Changes saved.
+              </div>
+            )}
+            <Button type="submit" loading={loading} className="mt-1 w-full py-3 text-base">
+              Save changes
+            </Button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
