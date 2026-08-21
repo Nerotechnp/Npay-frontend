@@ -106,6 +106,15 @@ export interface Gateway {
   updated_at: string;
 }
 
+// MobilePack is one purchasable data/SMS bundle for a carrier, loaded from the
+// product's delivery gateway at runtime (not hardcoded on the client).
+export interface MobilePack {
+  id: string; // package_id (NTC) or product_code (Ncell)
+  label: string;
+  price: number; // fixed price in NPR
+  validity: string;
+}
+
 export interface KhaltiBalance {
   credits_consumed: number;
   credits_available: number;

@@ -36,6 +36,9 @@ interface CreateTransactionInput {
   recipient_number: string;
   amount_npr: number;
   currency: string;
+  // package_reference carries the chosen data/SMS pack id (package_id for NTC,
+  // product_code for Ncell) so the delivery gateway knows which pack to provision.
+  package_reference?: string;
 }
 
 export function useCreateTransaction() {
