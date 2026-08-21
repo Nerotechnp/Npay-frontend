@@ -180,13 +180,29 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         {isBottom ? (
-          <header className="sticky top-0 z-20 flex h-14 items-center border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
+          <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
             <Link href="/dashboard" className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-moss to-moss2 text-[13px] font-extrabold tracking-tight text-white">
                 N
               </span>
               <span className="text-sm font-semibold text-ink">{brandLabel}</span>
             </Link>
+            {navItems
+              .filter((i) => i.href === "/admin")
+              .map(({ href, label, icon: Icon, exact }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
+                    isActive({ href, label, icon: Icon, exact })
+                      ? "bg-moss/10 text-moss"
+                      : "text-ink-3 hover:bg-paper hover:text-ink"
+                  }`}
+                >
+                  <Icon className="h-[1.125rem] w-[1.125rem]" />
+                  {label}
+                </Link>
+              ))}
           </header>
         ) : (
           <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line-2 bg-white/90 px-4 backdrop-blur lg:hidden">
@@ -214,21 +230,23 @@ export function AppShell({
         {/* Bottom tab bar (bottom mode only) */}
         {isBottom && (
           <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-2 bg-white/95 backdrop-blur lg:hidden">
-            {navItems.map(({ href, label, icon: Icon, exact }) => {
-              const active = isActive({ href, label, icon: Icon, exact });
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
-                    active ? "text-moss" : "text-ink-3"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </Link>
-              );
-            })}
+            {navItems
+              .filter(({ href }) => href !== "/admin")
+              .map(({ href, label, icon: Icon, exact }) => {
+                const active = isActive({ href, label, icon: Icon, exact });
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors ${
+                      active ? "text-moss" : "text-ink-3"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {label}
+                  </Link>
+                );
+              })}
             <button
               type="button"
               onClick={onLogout}
