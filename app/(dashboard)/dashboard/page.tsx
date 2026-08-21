@@ -56,7 +56,7 @@ export default function DashboardPage() {
           name: categoryMeta(p.category).label,
           category: p.category,
           href: hrefForCategory(p.category),
-          count: items.length,
+          options: items.map((x) => x.name).slice(0, 3),
         });
       } else {
         out.push({

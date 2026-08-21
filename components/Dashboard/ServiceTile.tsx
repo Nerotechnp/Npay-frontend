@@ -10,7 +10,7 @@ export interface Tile {
   name: string;
   description?: string;
   href: string;
-  count?: number;
+  options?: string[];
 }
 
 export function ServiceTile({ tile }: { tile: Tile }) {
@@ -37,8 +37,8 @@ export function ServiceTile({ tile }: { tile: Tile }) {
         </p>
       </div>
       <div className="relative flex items-center justify-between">
-        {tile.count ? (
-          <span className={`text-[11px] font-medium ${meta.accent}`}>{tile.count} options</span>
+        {tile.options && tile.options.length > 0 ? (
+          <span className={`text-[11px] font-medium ${meta.accent}`}>{tile.options.join(" · ")}</span>
         ) : (
           <span />
         )}
