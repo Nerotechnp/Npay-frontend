@@ -91,15 +91,15 @@ export default function DashboardPage() {
 
   return (
     <div className="relative">
-      {/* Full-bleed brand background, matching the profile page */}
+      {/* Full-bleed brand background, same style as the login page */}
       <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
-        <div className="pointer-events-none absolute -top-32 right-0 h-[42rem] w-[42rem] rounded-full bg-moss/[0.14] blur-[130px]" />
-        <div className="pointer-events-none absolute -bottom-32 left-0 h-[38rem] w-[38rem] rounded-full bg-saffron/[0.16] blur-[130px]" />
+        <div className="pointer-events-none absolute -top-40 right-0 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]" />
       </div>
 
       <div className="space-y-8">
       {/* Hero + stats banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss via-[#e11d48] to-[#9f1239] p-6 text-white shadow-lg shadow-red-900/10 sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss via-[#e11d48] to-[#9f1239] p-5 text-white shadow-lg shadow-red-900/10 sm:p-6">
         <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-8 h-44 w-44 rounded-full bg-black/10 blur-2xl" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_55%)]" />
@@ -110,31 +110,31 @@ export default function DashboardPage() {
               <Sparkles className="h-4 w-4" />
               {greeting}, {firstName || "there"}
             </p>
-            <h1 className="mt-1.5 font-display text-2xl font-bold leading-tight sm:text-3xl">
+            <h1 className="mt-1.5 font-display text-xl font-bold leading-tight sm:text-2xl">
               What would you like to pay?
             </h1>
-            <p className="mt-2 max-w-md text-sm text-white/75">
+            <p className="mt-2 max-w-md text-sm text-white/80">
               Pick a service, enter the details, and pay securely with your card — in any currency.
             </p>
           </div>
         </div>
 
-        <div className="relative mt-7 grid grid-cols-2 gap-x-4 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4">
+        <div className="relative mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/15 pt-5 sm:grid-cols-4">
           <div>
             <p className="text-2xl font-bold tracking-tight">{formatMoney(stats.totalPaid, "NPR")}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/70">Total paid · all time</p>
+            <p className="mt-0.5 text-[12px] font-medium text-white/80">Total paid · all time</p>
           </div>
           <div>
             <p className="text-2xl font-bold tracking-tight">{formatMoney(stats.monthTotal, "NPR")}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/70">This month</p>
+            <p className="mt-0.5 text-[12px] font-medium text-white/80">This month</p>
           </div>
           <div>
             <p className="text-2xl font-bold tracking-tight">{stats.paidCount}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/70">Completed</p>
+            <p className="mt-0.5 text-[12px] font-medium text-white/80">Completed</p>
           </div>
           <div>
             <p className="text-2xl font-bold tracking-tight">{stats.pendingCount}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/70">In progress</p>
+            <p className="mt-0.5 text-[12px] font-medium text-white/80">In progress</p>
           </div>
         </div>
       </section>

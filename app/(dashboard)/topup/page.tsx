@@ -107,16 +107,25 @@ export default function TopupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="relative">
+      {/* Full-bleed brand background, same style as the login page */}
+      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
+        <div className="pointer-events-none absolute -top-40 right-0 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]" />
+      </div>
+
+      <div className="mx-auto w-full max-w-md">
       <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1.5 text-sm text-ink-3 hover:text-ink">
         <ArrowLeft className="h-4 w-4" />
         Back to products
       </Link>
 
-      <h1 className="font-display text-2xl text-ink">Mobile Topup</h1>
-      <p className="mt-1 text-sm text-ink-3">
-        Enter the phone number — we&apos;ll detect the carrier (NTC or Ncell) automatically.
-      </p>
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Mobile Topup</h1>
+        <p className="mt-2 text-sm text-ink-3">
+          Enter the phone number — we&apos;ll detect the carrier (NTC or Ncell) automatically.
+        </p>
+      </div>
 
       {step === "form" ? (
         <Card className="mt-6">
@@ -228,6 +237,7 @@ export default function TopupPage() {
           </div>
         </Card>
       )}
+      </div>
     </div>
   );
 }
