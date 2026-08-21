@@ -41,12 +41,6 @@ export default function ProfilePage() {
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col items-center justify-center px-4 py-10">
-      {/* Full-bleed brand background, same style as the login page */}
-      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
-        <div className="pointer-events-none absolute -top-40 right-0 h-[32rem] w-[32rem] rounded-full bg-moss/[0.10] blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-40 left-0 h-[30rem] w-[30rem] rounded-full bg-saffron/[0.12] blur-[120px]" />
-      </div>
-
       <div className="relative w-full max-w-md">
         <div className="mb-7 flex flex-col items-center text-center">
           <h1 className="text-3xl font-extrabold tracking-tight text-ink">Your profile</h1>

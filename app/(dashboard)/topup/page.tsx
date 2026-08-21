@@ -108,12 +108,6 @@ export default function TopupPage() {
 
   return (
     <div className="relative">
-      {/* Full-bleed brand background, same style as the login page */}
-      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
-        <div className="pointer-events-none absolute -top-40 right-0 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]" />
-      </div>
-
       <div className="mx-auto w-full max-w-md">
       <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1.5 text-sm text-ink-3 hover:text-ink">
         <ArrowLeft className="h-4 w-4" />

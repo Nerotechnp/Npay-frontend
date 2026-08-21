@@ -90,51 +90,43 @@ export default function DashboardPage() {
   }, [transactions]);
 
   return (
-    <div className="relative">
-      {/* Full-bleed brand background, same style as the login page */}
-      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
-        <div className="pointer-events-none absolute -top-40 right-0 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]" />
-      </div>
-
-      <div className="space-y-8">
+    <div className="space-y-8">
       {/* Hero + stats banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moss via-[#e11d48] to-[#9f1239] p-5 text-white shadow-lg shadow-red-900/10 sm:p-6">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-8 h-44 w-44 rounded-full bg-black/10 blur-2xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_55%)]" />
+      <section className="relative overflow-hidden rounded-3xl border border-line bg-white p-5 shadow-sm shadow-moss/5 sm:p-6">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full bg-moss/[0.08] blur-2xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-8 h-40 w-40 rounded-full bg-saffron/[0.10] blur-2xl" />
 
         <div className="relative flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[13px] font-medium text-white/80">
+            <p className="flex items-center gap-1.5 text-[13px] font-medium text-moss">
               <Sparkles className="h-4 w-4" />
               {greeting}, {firstName || "there"}
             </p>
-            <h1 className="mt-1.5 font-display text-xl font-bold leading-tight sm:text-2xl">
+            <h1 className="mt-1.5 font-display text-xl font-bold leading-tight text-ink sm:text-2xl">
               What would you like to pay?
             </h1>
-            <p className="mt-2 max-w-md text-sm text-white/80">
+            <p className="mt-2 max-w-md text-sm text-ink-3">
               Pick a service, enter the details, and pay securely with your card — in any currency.
             </p>
           </div>
         </div>
 
-        <div className="relative mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/15 pt-5 sm:grid-cols-4">
+        <div className="relative mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-5 sm:grid-cols-4">
           <div>
-            <p className="text-2xl font-bold tracking-tight">{formatMoney(stats.totalPaid, "NPR")}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/80">Total paid · all time</p>
+            <p className="text-2xl font-bold tracking-tight text-ink">{formatMoney(stats.totalPaid, "NPR")}</p>
+            <p className="mt-0.5 text-[12px] font-medium text-ink-3">Total paid · all time</p>
           </div>
           <div>
-            <p className="text-2xl font-bold tracking-tight">{formatMoney(stats.monthTotal, "NPR")}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/80">This month</p>
+            <p className="text-2xl font-bold tracking-tight text-ink">{formatMoney(stats.monthTotal, "NPR")}</p>
+            <p className="mt-0.5 text-[12px] font-medium text-ink-3">This month</p>
           </div>
           <div>
-            <p className="text-2xl font-bold tracking-tight">{stats.paidCount}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/80">Completed</p>
+            <p className="text-2xl font-bold tracking-tight text-ink">{stats.paidCount}</p>
+            <p className="mt-0.5 text-[12px] font-medium text-ink-3">Completed</p>
           </div>
           <div>
-            <p className="text-2xl font-bold tracking-tight">{stats.pendingCount}</p>
-            <p className="mt-0.5 text-[12px] font-medium text-white/80">In progress</p>
+            <p className="text-2xl font-bold tracking-tight text-ink">{stats.pendingCount}</p>
+            <p className="mt-0.5 text-[12px] font-medium text-ink-3">In progress</p>
           </div>
         </div>
       </section>
@@ -173,7 +165,6 @@ export default function DashboardPage() {
 
       {/* Recent activity */}
       <RecentActivity transactions={transactions} />
-      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogOut, ChevronRight } from "lucide-react";
@@ -39,6 +39,16 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // Lock background scroll while the mobile sidebar drawer is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   const isActive = (item: ShellNavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
@@ -129,6 +139,12 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-paper text-ink">
+      {/* Shared full-bleed brand background (login-page style), rendered once */}
+      <div aria-hidden="true" className="fixed inset-0 -z-10 overflow-hidden bg-paper">
+        <div className="pointer-events-none absolute -top-40 right-0 h-[28rem] w-[28rem] rounded-full bg-moss/[0.08] blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-32 left-0 h-96 w-96 rounded-full bg-saffron/[0.10] blur-[100px]" />
+      </div>
+
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-hidden border-r border-line-2 bg-white lg:flex">
         {sideContent}
