@@ -85,8 +85,10 @@ export default function MobilePackPage() {
         Back to products
       </Link>
 
-      <h1 className="font-display text-2xl text-ink">Mobile Pack</h1>
-      <p className="mt-1 text-sm text-ink-3">Pick your provider, enter the number, and pay for a data/SMS pack.</p>
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Mobile Pack</h1>
+        <p className="mt-2 text-sm text-ink-3">Pick your provider, enter the number, and pay for a data/SMS pack.</p>
+      </div>
 
       {step === "form" ? (
         <Card className="mt-6">

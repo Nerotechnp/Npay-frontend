@@ -89,10 +89,12 @@ export default function ServicePaymentPage() {
         Back to products
       </Link>
 
-      <h1 className="font-display text-2xl text-ink">{product.name}</h1>
-      <p className="mt-1 text-sm text-ink-3">
-        Enter the details below. We&apos;ll show you the exact amount before you pay.
-      </p>
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">{product.name}</h1>
+        <p className="mt-2 text-sm text-ink-3">
+          Enter the details below. We&apos;ll show you the exact amount before you pay.
+        </p>
+      </div>
 
       {step === "form" ? (
         <Card className="mt-6">
