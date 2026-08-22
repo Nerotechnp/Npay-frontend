@@ -122,7 +122,7 @@ export function ProductFormModal({ product, gateways, onClose, onSubmit }: Produ
           ))}
         </Select>
 
-        {category === "mobile_topup" && (
+        {(category === "mobile_topup" || category === "mobile_pack") && (
           <Input
             label="Phone prefixes (comma-separated, for auto-detect)"
             value={phonePrefixes}
