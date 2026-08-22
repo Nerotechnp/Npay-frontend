@@ -7,16 +7,18 @@ import type { ApiSuccess, MobilePack } from "@/types";
 // usePacks loads the real, gateway-sourced pack catalog for a mobile_pack
 // product. The catalog lives in the delivery gateway's Config JSON (admin
 // managed), so it reflects what the gateway can actually provision — no
-// client-side hardcoding. Disabled until a product is selected.
+// client-side hardcoding. The packs are now returned by the product detail
+// endpoint (GET /api/v1/products/:id?include=packs), so a single call covers
+// both product metadata and its pack list. Disabled until a product is selected.
 export function usePacks(productId: string | null) {
   return useQuery({
     queryKey: ["products", productId, "packs"],
     enabled: !!productId,
     queryFn: async () => {
-      const res = await apiClient.get<ApiSuccess<MobilePack[]>>(
-        `/api/v1/products/${productId}/packs`
+      const res = await apiClient.get<ApiSuccess<{ packages: MobilePack[] }>>(
+        `/api/v1/products/${productId}?include=packs`
       );
-      return res.data.data;
+      return res.data.data.packages;
     },
   });
 }

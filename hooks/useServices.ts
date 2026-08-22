@@ -51,15 +51,17 @@ export function hrefForCategory(category: string): string {
 }
 // product form uses it to render the category dropdown and the dependent
 // product-code dropdown, so the category -> product-code mapping lives in one
-// place (the backend) rather than being hardcoded on the client.
+// place (the backend) rather than being hardcoded on the client. Categories are
+// now returned by the product list endpoint (GET /api/v1/products?include=categories),
+// so a single products call can cover both the catalog and its categories.
 export function useProductCategories() {
   return useQuery({
     queryKey: ["product-categories"],
     queryFn: async () => {
-      const res = await apiClient.get<ApiSuccess<ProductCategory[]>>(
-        "/api/v1/products/categories"
+      const res = await apiClient.get<ApiSuccess<{ categories: ProductCategory[] }>>(
+        "/api/v1/products?include=categories"
       );
-      return res.data.data;
+      return res.data.data.categories;
     },
     staleTime: 5 * 60 * 1000,
   });

@@ -12,7 +12,7 @@ import { useProductCategories } from "@/hooks/useServices";
 const percentInput = (value: number) => (value ? String(value) : "");
 
 // Fallback so the form still works if the categories endpoint is unreachable.
-// The live list is fetched from the backend (GET /api/v1/products/categories).
+// The live list is fetched from the backend (GET /api/v1/products?include=categories).
 const FALLBACK_CATEGORIES: ProductCategory[] = [
   { category: "mobile_topup", label: "Mobile Topup", product_codes: ["ntc_topup", "ncell_topup"] },
   { category: "mobile_pack", label: "Mobile Pack", product_codes: ["ntc_data", "ncell_data"] },

@@ -32,7 +32,7 @@ export interface Product {
 }
 
 // ProductCategory is one entry of the backend-sourced category list
-// (GET /api/v1/products/categories). product_codes are the options offered in
+// (GET /api/v1/products?include=categories). product_codes are the options offered in
 // the dependent product-code dropdown for the chosen category.
 export interface ProductCategory {
   category: string;
