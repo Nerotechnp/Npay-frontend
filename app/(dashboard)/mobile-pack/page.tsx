@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import { useServices } from "@/hooks/useServices";
@@ -11,6 +11,7 @@ import { usePacks } from "@/hooks/usePacks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { LiveRateBadge } from "@/components/LiveRateBadge";
 import { computeFeesInCurrency } from "@/lib/fees";
 import type { MobilePack, Product } from "@/types";
@@ -27,19 +28,27 @@ export default function MobilePackPage() {
   const [phone, setPhone] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
+  const [packModalOpen, setPackModalOpen] = useState(false);
 
   const packProducts = (products || []).filter(
     (p) => p.category === "mobile_pack" && p.is_active
   );
 
+  // Keep a provider selected by defaulting to the first pack product, so the page
+  // opens straight to its packs with a switcher to change carriers.
+  const activeProvider = provider ?? packProducts[0] ?? null;
+  useEffect(() => {
+    if (!provider && packProducts.length > 0) setProvider(packProducts[0]);
+  }, [provider, packProducts]);
+
   // Packs are loaded from the product's delivery gateway at runtime, so they
   // always reflect what the gateway can actually provision.
-  const { data: packs, isLoading: packsLoading } = usePacks(provider?.id ?? null);
+  const { data: packs, isLoading: packsLoading } = usePacks(activeProvider?.id ?? null);
 
   const rate = rateForCurrency(config, currency);
   const currencies = config?.supported_currencies || ["USD"];
   const amountNpr = pack?.price ?? 0;
-  const { service, bank, total } = computeFeesInCurrency(amountNpr, rate, provider);
+  const { service, bank, total } = computeFeesInCurrency(amountNpr, rate, activeProvider);
   const amountCharged = total.toFixed(2);
   const loading = createTransaction.isPending || initiatePayment.isPending;
 
@@ -47,10 +56,10 @@ export default function MobilePackPage() {
   // number, and — when the product declares phone_prefixes — that the number
   // matches one of them. An empty prefix list (no admin config) is allowed.
   function phoneMatchesProvider(value: string): boolean {
-    if (!provider) return false;
+    if (!activeProvider) return false;
     const normalized = value.replace(/\D/g, "");
     if (normalized.length !== 10) return false;
-    const prefixes = (provider.phone_prefixes || "")
+    const prefixes = (activeProvider.phone_prefixes || "")
       .split(",")
       .map((x) => x.trim())
       .filter(Boolean);
@@ -69,7 +78,7 @@ export default function MobilePackPage() {
     e.preventDefault();
     setError("");
 
-    if (!provider) {
+    if (!activeProvider) {
       setError("Choose your provider.");
       return;
     }
@@ -78,18 +87,18 @@ export default function MobilePackPage() {
       return;
     }
     if (!phoneMatchesProvider(phone)) {
-      setError(`Enter a valid ${provider.name} number (10 digits).`);
+      setError(`Enter a valid ${activeProvider.name} number (10 digits).`);
       return;
     }
     setStep("review");
   }
 
   async function handlePay() {
-    if (!provider || !pack) return;
+    if (!activeProvider || !pack) return;
     setError("");
     try {
       const tx = await createTransaction.mutateAsync({
-        service_id: provider.id,
+        service_id: activeProvider.id,
         recipient_number: phone,
         amount_npr: amountNpr,
         currency,
@@ -117,109 +126,128 @@ export default function MobilePackPage() {
       </div>
 
       {step === "form" ? (
-        !provider ? (
-          <div className="grid grid-cols-2 gap-3">
-            {packProducts.length === 0 ? (
-              <p className="col-span-2 text-sm text-ink-3">No mobile packs available right now.</p>
-            ) : (
-              packProducts.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => selectProduct(p)}
-                  className="rounded-xl border border-line-2 bg-paper px-4 py-6 text-left transition hover:border-moss focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss"
-                >
-                  <span className="block text-base font-semibold text-ink">{p.name}</span>
-                  <span className="mt-1 block text-xs text-ink-3">View packs</span>
-                </button>
-              ))
-            )}
-          </div>
+        packProducts.length === 0 ? (
+          <p className="text-sm text-ink-3">No mobile packs available right now.</p>
         ) : (
-          <Card className="mt-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-ink-3">Selected provider</p>
-                <p className="text-base font-semibold text-ink">{provider.name}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => selectProduct(provider)}
-                className="text-xs font-medium text-moss hover:underline"
-              >
-                Change
-              </button>
-            </div>
-
-            <p className="mb-2 text-sm font-medium text-ink-2/80">Available packs</p>
-            {packsLoading ? (
-              <p className="text-sm text-ink-3">Loading packs…</p>
-            ) : (packs || []).length === 0 ? (
-              <p className="text-sm text-ink-3">No packs available for this provider right now.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {(packs || []).map((p) => {
-                const active = pack?.id === p.id;
+          <>
+            {/* Provider switcher */}
+            <div className="mb-4 flex gap-2">
+              {packProducts.map((p) => {
+                const active = activeProvider?.id === p.id;
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => {
-                      setPack(p);
-                      setError("");
-                    }}
-                    className={`rounded-xl border px-3 py-3 text-left transition ${
+                    onClick={() => selectProduct(p)}
+                    className={`flex-1 rounded-xl border px-3 py-3 text-sm font-semibold transition ${
                       active
-                        ? "border-moss bg-moss/10 ring-1 ring-moss"
-                        : "border-line-2 bg-paper hover:border-moss"
+                        ? "border-moss bg-moss/10 text-ink ring-1 ring-moss"
+                        : "border-line-2 bg-paper text-ink-3 hover:border-moss"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-1">
-                      <span className="text-sm font-semibold text-ink">{p.label}</span>
-                      {active && <Check className="h-4 w-4 shrink-0 text-moss" />}
-                    </div>
-                    <span className="mt-1 block text-xs text-ink-3">{p.validity}</span>
-                    <span className="mt-1 block text-sm font-medium text-ink">{p.price} NPR</span>
+                    {p.name}
                   </button>
                 );
               })}
-              </div>
+            </div>
+
+            <Card className="mt-2">
+              <p className="mb-3 text-sm font-medium text-ink-2/80">Available pack</p>
+              <button
+                type="button"
+                onClick={() => setPackModalOpen(true)}
+                className="w-full rounded-xl border border-line-2 bg-paper px-4 py-3 text-left transition hover:border-moss"
+              >
+                {pack ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{pack.label}</p>
+                      <p className="text-xs text-ink-3">{pack.validity}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-ink">{pack.price} NPR</p>
+                  </div>
+                ) : (
+                  <span className="text-sm text-ink-3">Tap to choose a pack</span>
+                )}
+              </button>
+
+              <form onSubmit={handleContinue} className="mt-5 flex flex-col gap-4">
+                <Input
+                  label="Phone number"
+                  placeholder="98XXXXXXX or 97XXXXXXX"
+                  inputMode="numeric"
+                  type="tel"
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                  required
+                  disabled={!pack}
+                />
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-ink-2/80">Pay with</label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="rounded-lg border border-line-2 bg-paper px-3.5 py-2.5 text-sm text-ink focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss"
+                  >
+                    {currencies.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {error && <p className="text-xs text-danger">{error}</p>}
+
+                <Button type="submit" className="w-full" disabled={!pack || !phone}>
+                  Continue
+                </Button>
+              </form>
+            </Card>
+
+            {packModalOpen && (
+              <Modal title="Choose a pack" onClose={() => setPackModalOpen(false)}>
+                {packsLoading ? (
+                  <p className="text-sm text-ink-3">Loading packs…</p>
+                ) : (packs || []).length === 0 ? (
+                  <p className="text-sm text-ink-3">No packs available for this provider right now.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {(packs || []).map((p) => {
+                      const active = pack?.id === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setPack(p);
+                            setError("");
+                            setPackModalOpen(false);
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-left transition ${
+                            active
+                              ? "border-moss bg-moss/10 ring-1 ring-moss"
+                              : "border-line-2 bg-paper hover:border-moss"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-ink">{p.label}</p>
+                              <p className="text-xs text-ink-3">{p.validity}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-ink">{p.price} NPR</p>
+                              {active && <Check className="h-4 w-4 text-moss" />}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </Modal>
             )}
-
-
-            <form onSubmit={handleContinue} className="mt-5 flex flex-col gap-4">
-              <Input
-                label="Phone number"
-                placeholder="98XXXXXXX or 97XXXXXXX"
-                inputMode="numeric"
-                type="tel"
-                maxLength={10}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                required
-                disabled={!pack}
-              />
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-ink-2/80">Pay with</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="rounded-lg border border-line-2 bg-paper px-3.5 py-2.5 text-sm text-ink focus:border-moss focus:outline-none focus:ring-1 focus:ring-moss"
-                >
-                  {currencies.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-
-              {error && <p className="text-xs text-danger">{error}</p>}
-
-              <Button type="submit" className="w-full" disabled={!pack || !phone}>
-                Continue
-              </Button>
-            </form>
-          </Card>
+          </>
         )
       ) : (
         <Card className="mt-6">
@@ -227,7 +255,7 @@ export default function MobilePackPage() {
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between">
               <dt className="text-ink-3">Provider</dt>
-              <dd className="font-medium text-ink">{provider?.name}</dd>
+              <dd className="font-medium text-ink">{activeProvider?.name}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-ink-3">Pack</dt>
@@ -252,11 +280,11 @@ export default function MobilePackPage() {
             {service > 0 || bank > 0 ? (
               <>
                 <div className="flex justify-between text-xs text-ink-3/70">
-                  <dt>Service charge ({provider?.service_charge ?? 0}%)</dt>
+                  <dt>Service charge ({activeProvider?.service_charge ?? 0}%)</dt>
                   <dd>{service.toFixed(2)} {currency}</dd>
                 </div>
                 <div className="flex justify-between text-xs text-ink-3/70">
-                  <dt>Bank processing fee ({provider?.bank_processing_fee ?? 0}%)</dt>
+                  <dt>Bank processing fee ({activeProvider?.bank_processing_fee ?? 0}%)</dt>
                   <dd>{bank.toFixed(2)} {currency}</dd>
                 </div>
               </>
