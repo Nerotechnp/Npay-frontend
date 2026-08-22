@@ -19,7 +19,7 @@ import type { MobilePack, Product } from "@/types";
 export default function MobilePackPage() {
   const { data: products } = useServices();
   const { data: config } = useConfig();
-  const detectProduct = useDetectProduct();
+  const detectProduct = useDetectProduct("mobile_pack");
   const createTransaction = useCreateTransaction();
   const initiatePayment = useInitiatePayment();
 
@@ -187,7 +187,7 @@ export default function MobilePackPage() {
                     disabled={!pack}
                   />
                   {phone.replace(/\D/g, "").length >= 3 && (
-                    <p className={`mt-1 text-xs ${phoneValid ? "text-moss" : "text-ink-3"}`}>
+                    <p className={`mt-1 text-xs ${phoneValid ? "text-green-600" : "text-ink-3"}`}>
                       {phoneValid
                         ? `Valid ${activeProvider?.name} number`
                         : "Number does not match selected provider"}

@@ -132,7 +132,7 @@ export default function TopupPage() {
             />
 
             {phone.replace(/\D/g, "").length >= 3 && (
-              <p className={`text-xs ${provider ? "text-moss" : "text-ink-3"}`}>
+              <p className={`text-xs ${provider ? "text-green-600" : "text-ink-3"}`}>
                 {provider ? `Detected: ${provider.name}` : "Carrier not recognized yet — keep typing a valid NTC/Ncell number."}
               </p>
             )}

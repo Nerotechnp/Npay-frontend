@@ -27,12 +27,15 @@ export function useService(id: string) {
   });
 }
 
-// Server-side carrier detection: given a phone number, the backend resolves the
-// matching mobile_topup product from admin-managed prefixes.
-export function useDetectProduct() {
+// Server-side carrier detection: given a phone number and optional category,
+// the backend resolves the matching product from admin-managed prefixes.
+export function useDetectProduct(category = "mobile_topup") {
   return useMutation({
     mutationFn: async (phone: string) => {
-      const res = await apiClient.post<ApiSuccess<Product>>("/api/v1/detect", { phone });
+      const res = await apiClient.post<ApiSuccess<Product>>(
+        `/api/v1/detect?category=${category}`,
+        { phone }
+      );
       return res.data.data;
     },
   });
