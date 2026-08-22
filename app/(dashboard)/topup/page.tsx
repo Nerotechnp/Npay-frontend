@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useServices } from "@/hooks/useServices";
+import { useDetectProduct } from "@/hooks/useServices";
 import { useConfig } from "@/hooks/useConfig";
 import { rateForCurrency } from "@/lib/exchangeRate";
 import { useCreateTransaction, useInitiatePayment } from "@/hooks/useTransactions";
@@ -15,8 +15,8 @@ import { LiveRateBadge } from "@/components/LiveRateBadge";
 import { computeFeesInCurrency } from "@/lib/fees";
 
 export default function TopupPage() {
-  const { data: products } = useServices();
   const { data: config } = useConfig();
+  const detectProduct = useDetectProduct();
   const createTransaction = useCreateTransaction();
   const initiatePayment = useInitiatePayment();
 
@@ -27,27 +27,23 @@ export default function TopupPage() {
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
 
-  // Instant, network-free carrier detection: the products (with their
-  // admin-managed phone_prefixes) are already loaded by useServices(), so we just
-  // match the 3-digit prefix client-side. No API round-trip, so it never feels slow.
+  // Server-side carrier detection: fires once the user has typed 3+ digits.
+  // Debounced 400ms so we don't hit the API on every keystroke.
   useEffect(() => {
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 3) {
       setProvider(null);
       return;
     }
-    const prefix = digits.slice(0, 3);
-    const match = (products || []).find(
-      (p) =>
-        p.is_active &&
-        p.category === "mobile_topup" &&
-        p.phone_prefixes
-          .split(",")
-          .map((x) => x.trim())
-          .includes(prefix)
-    );
-    setProvider(match || null);
-  }, [phone, products]);
+    const timer = setTimeout(() => {
+      detectProduct.mutate(digits, {
+        onSuccess: (product) => setProvider(product),
+        onError: () => setProvider(null),
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone]);
 
   const rate = rateForCurrency(config, currency);
   const currencies = config?.supported_currencies || ["USD"];

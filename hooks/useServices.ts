@@ -32,7 +32,7 @@ export function useService(id: string) {
 export function useDetectProduct() {
   return useMutation({
     mutationFn: async (phone: string) => {
-      const res = await apiClient.post<ApiSuccess<Product>>("/api/v1/products/detect", { phone });
+      const res = await apiClient.post<ApiSuccess<Product>>("/api/v1/detect", { phone });
       return res.data.data;
     },
   });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
-import { useServices } from "@/hooks/useServices";
+import { useServices, useDetectProduct } from "@/hooks/useServices";
 import { useConfig } from "@/hooks/useConfig";
 import { rateForCurrency } from "@/lib/exchangeRate";
 import { useCreateTransaction, useInitiatePayment } from "@/hooks/useTransactions";
@@ -19,6 +19,7 @@ import type { MobilePack, Product } from "@/types";
 export default function MobilePackPage() {
   const { data: products } = useServices();
   const { data: config } = useConfig();
+  const detectProduct = useDetectProduct();
   const createTransaction = useCreateTransaction();
   const initiatePayment = useInitiatePayment();
 
@@ -29,20 +30,35 @@ export default function MobilePackPage() {
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
   const [packModalOpen, setPackModalOpen] = useState(false);
+  const [phoneValid, setPhoneValid] = useState(false);
 
   const packProducts = (products || []).filter(
     (p) => p.category === "mobile_pack" && p.is_active
   );
 
-  // Keep a provider selected by defaulting to the first pack product, so the page
-  // opens straight to its packs with a switcher to change carriers.
   const activeProvider = provider ?? packProducts[0] ?? null;
   useEffect(() => {
     if (!provider && packProducts.length > 0) setProvider(packProducts[0]);
   }, [provider, packProducts]);
 
-  // Packs are loaded from the product's delivery gateway at runtime, so they
-  // always reflect what the gateway can actually provision.
+  // Server-side phone validation: debounced detect call confirms the number
+  // belongs to the selected provider using admin-managed prefixes.
+  useEffect(() => {
+    setPhoneValid(false);
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 3) return;
+    const timer = setTimeout(() => {
+      detectProduct.mutate(digits, {
+        onSuccess: (detected) => {
+          setPhoneValid(detected.id === activeProvider?.id);
+        },
+        onError: () => setPhoneValid(false),
+      });
+    }, 400);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, activeProvider?.id]);
+
   const { data: packs, isLoading: packsLoading } = usePacks(activeProvider?.id ?? null);
 
   const rate = rateForCurrency(config, currency);
@@ -52,25 +68,11 @@ export default function MobilePackPage() {
   const amountCharged = total.toFixed(2);
   const loading = createTransaction.isPending || initiatePayment.isPending;
 
-  // Validate the phone the same way mobile topup does: require a 10-digit Nepal
-  // number, and — when the product declares phone_prefixes — that the number
-  // matches one of them. An empty prefix list (no admin config) is allowed.
-  function phoneMatchesProvider(value: string): boolean {
-    if (!activeProvider) return false;
-    const normalized = value.replace(/\D/g, "");
-    if (normalized.length !== 10) return false;
-    const prefixes = (activeProvider.phone_prefixes || "")
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean);
-    if (prefixes.length === 0) return true;
-    return prefixes.some((prefix) => normalized.startsWith(prefix));
-  }
-
   function selectProduct(p: Product) {
     setProvider(p);
     setPack(null);
     setPhone("");
+    setPhoneValid(false);
     setError("");
   }
 
@@ -86,7 +88,7 @@ export default function MobilePackPage() {
       setError("Choose a pack.");
       return;
     }
-    if (!phoneMatchesProvider(phone)) {
+    if (!phoneValid) {
       setError(`Enter a valid ${activeProvider.name} number (10 digits).`);
       return;
     }
@@ -172,17 +174,26 @@ export default function MobilePackPage() {
               </button>
 
               <form onSubmit={handleContinue} className="mt-5 flex flex-col gap-4">
-                <Input
-                  label="Phone number"
-                  placeholder="98XXXXXXX or 97XXXXXXX"
-                  inputMode="numeric"
-                  type="tel"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                  required
-                  disabled={!pack}
-                />
+                <div>
+                  <Input
+                    label="Phone number"
+                    placeholder="98XXXXXXX or 97XXXXXXX"
+                    inputMode="numeric"
+                    type="tel"
+                    maxLength={10}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                    required
+                    disabled={!pack}
+                  />
+                  {phone.replace(/\D/g, "").length >= 3 && (
+                    <p className={`mt-1 text-xs ${phoneValid ? "text-moss" : "text-ink-3"}`}>
+                      {phoneValid
+                        ? `Valid ${activeProvider?.name} number`
+                        : "Number does not match selected provider"}
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-ink-2/80">Pay with</label>
@@ -199,7 +210,7 @@ export default function MobilePackPage() {
 
                 {error && <p className="text-xs text-danger">{error}</p>}
 
-                <Button type="submit" className="w-full" disabled={!pack || !phone}>
+                <Button type="submit" className="w-full" disabled={!pack || !phoneValid}>
                   Continue
                 </Button>
               </form>
