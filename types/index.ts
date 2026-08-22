@@ -31,6 +31,15 @@ export interface Product {
   updated_at?: string;
 }
 
+// ProductCategory is one entry of the backend-sourced category list
+// (GET /api/v1/products/categories). product_codes are the options offered in
+// the dependent product-code dropdown for the chosen category.
+export interface ProductCategory {
+  category: string;
+  label: string;
+  product_codes: string[];
+}
+
 // ForexRate is a single Nepal Rastra Bank quote for one currency, normalized to
 // NPR per 1 unit (NRB quotes INR per 100 and JPY per 10, so the raw buy/sell
 // are divided by the unit).

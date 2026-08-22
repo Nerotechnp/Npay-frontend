@@ -5,10 +5,21 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import type { Product, Gateway } from "@/types";
+import type { Product, Gateway, ProductCategory } from "@/types";
 import type { ProductInput } from "@/hooks/admin/useAdminProducts";
+import { useProductCategories } from "@/hooks/useServices";
 
 const percentInput = (value: number) => (value ? String(value) : "");
+
+// Fallback so the form still works if the categories endpoint is unreachable.
+// The live list is fetched from the backend (GET /api/v1/products/categories).
+const FALLBACK_CATEGORIES: ProductCategory[] = [
+  { category: "mobile_topup", label: "Mobile Topup", product_codes: ["ntc_topup", "ncell_topup"] },
+  { category: "mobile_pack", label: "Mobile Pack", product_codes: ["ntc_data", "ncell_data"] },
+  { category: "internet", label: "Internet", product_codes: ["internet"] },
+  { category: "utility", label: "Utility", product_codes: ["nea_electricity"] },
+  { category: "transport", label: "Transport", product_codes: ["transport"] },
+];
 
 interface ProductFormModalProps {
   product?: Product | null;
@@ -18,9 +29,26 @@ interface ProductFormModalProps {
 }
 
 export function ProductFormModal({ product, gateways, onClose, onSubmit }: ProductFormModalProps) {
+  const { data: categoryData } = useProductCategories();
+  const categories = categoryData ?? FALLBACK_CATEGORIES;
+
   const [name, setName] = useState(product?.name || "");
   const [category, setCategory] = useState(product?.category || "mobile_topup");
-  const [productCode, setProductCode] = useState(product?.product_code || "");
+  const [productCode, setProductCode] = useState(
+    product?.product_code || categories.find((c) => c.category === (product?.category || "mobile_topup"))?.product_codes[0] || ""
+  );
+
+  // When the category changes, switch the product code to a valid option for the
+  // new category (keep it only if it's still offered by the new category).
+  function handleCategoryChange(value: string) {
+    setCategory(value);
+    const codes = categories.find((c) => c.category === value)?.product_codes ?? [];
+    if (!codes.includes(productCode)) {
+      setProductCode(codes[0] ?? "");
+    }
+  }
+
+  const productCodeOptions = categories.find((c) => c.category === category)?.product_codes ?? [];
   const [gatewayId, setGatewayId] = useState(product?.gateway_id || "");
   const [phonePrefixes, setPhonePrefixes] = useState(product?.phone_prefixes || "");
   const [minAmount, setMinAmount] = useState(product?.min_amount ?? 0);
@@ -65,21 +93,25 @@ export function ProductFormModal({ product, gateways, onClose, onSubmit }: Produ
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
 
-        <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="mobile_topup">Mobile Topup</option>
-          <option value="internet">Internet</option>
-          <option value="mobile_pack">Mobile Pack</option>
-          <option value="utility">Utility</option>
-          <option value="transport">Transport</option>
+        <Select label="Category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+          {categories.map((c) => (
+            <option key={c.category} value={c.category}>
+              {c.label}
+            </option>
+          ))}
         </Select>
 
-        <Input
-          label="Product code"
-          value={productCode}
-          onChange={(e) => setProductCode(e.target.value)}
-          placeholder="e.g. ntc_topup"
-          required
-        />
+        <Select label="Product code" value={productCode} onChange={(e) => setProductCode(e.target.value)} required>
+          {productCodeOptions.length === 0 ? (
+            <option value="">— None —</option>
+          ) : (
+            productCodeOptions.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))
+          )}
+        </Select>
 
         <Select label="Gateway (optional)" value={gatewayId} onChange={(e) => setGatewayId(e.target.value)}>
           <option value="">— None —</option>

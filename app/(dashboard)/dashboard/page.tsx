@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
-import { useServices } from "@/hooks/useServices";
+import { useServices, GROUPED_CATEGORIES, hrefForCategory } from "@/hooks/useServices";
 import { useAuth } from "@/hooks/useAuth";
 import { useTransactions } from "@/hooks/useTransactions";
 import { formatMoney } from "@/lib/format";
@@ -10,15 +10,6 @@ import type { Product } from "@/types";
 import { ServiceTile, type Tile } from "@/components/Dashboard/ServiceTile";
 import { RecentActivity } from "@/components/Dashboard/RecentActivity";
 import { categoryMeta } from "@/components/Dashboard/categoryStyle";
-
-const GROUPED_CATEGORIES = ["mobile_topup", "internet", "mobile_pack"];
-
-function hrefForCategory(category: string): string {
-  if (category === "internet") return "/internet";
-  if (category === "mobile_pack") return "/mobile-pack";
-  if (category === "mobile_topup") return "/topup";
-  return "/services";
-}
 
 function getGreeting(): string {
   const hour = new Date().getHours();
