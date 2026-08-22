@@ -62,8 +62,9 @@ export default function TransactionDetailPage() {
           <Row label="Amount charged" value={formatMoney(tx.amount_charged, tx.currency)} />
           <Row label="Rate" value={`1 ${tx.currency} ≈ ${tx.exchange_rate} NPR`} />
           <Row label="Date" value={formatDate(tx.created_at)} />
+          <Row label="Our reference" value={`npay-${tx.id}`} />
           {tx.provider_reference && (
-            <Row label="Reference" value={tx.provider_reference} />
+            <Row label="Gateway reference" value={tx.provider_reference} />
           )}
         </div>
       </Card>
